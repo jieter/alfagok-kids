@@ -31,6 +31,8 @@
     }
 
     main {
+      position: relative;
+      z-index: 1;
       width: min(100%, 560px);
       margin: 0 auto;
       padding: 30px;
@@ -45,10 +47,7 @@
     }
 
     .mascot {
-      display: block;
-      margin-bottom: 4px;
-      font-size: 54px;
-      line-height: 1;
+      margin-right: .2em;
     }
 
     h1 {
@@ -74,17 +73,23 @@
       font-weight: 700;
     }
 
+    .guesses {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 40px;
+      margin: 6px 0;
+    }
+
     .guess-list {
-      min-height: 54px;
-      margin: 0;
-      padding: 0;
-      list-style: none;
+      display: contents;
     }
 
     .guess-list li {
-      width: fit-content;
-      margin: 6px auto;
-      padding: 7px 14px;
+      list-style: none;
+      padding: 4px 10px;
       border: 2px solid #dfe6ef;
       border-radius: 12px;
       background: #f7f9fc;
@@ -99,12 +104,12 @@
     }
 
     @keyframes pop {
-      from { transform: scale(.85); }
+ { transform: scale(.85); }
       to { transform: scale(1); }
     }
 
     .zone-label {
-      margin: 8px 0 2px;
+      margin: 0;
       color: #53617a;
       font-size: .88rem;
       font-weight: 700;
@@ -115,6 +120,31 @@
       display: flex;
       gap: 8px;
       margin: 12px 0;
+    }
+
+    form[hidden] {
+      display: none;
+    }
+
+    .confetti {
+      position: fixed;
+      z-index: 2;
+      width: 10px;
+      height: 16px;
+      border-radius: 2px;
+      pointer-events: none;
+    }
+
+    .success {
+      margin: 12px 0;
+      padding: 13px 15px;
+      border: 3px solid #23324d;
+      border-radius: 14px;
+      background: #2b8a4e;
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 800;
+      text-align: center;
     }
 
     input {
@@ -174,6 +204,59 @@
       line-height: 1.5;
     }
 
+    .alphabets {
+      position: fixed;
+      top: 50%;
+      left: 24px;
+      display: flex;
+      gap: 10px;
+      transform: translateY(-50%);
+    }
+
+    .alphabet {
+      display: flex;
+      flex-direction: column;
+      gap: .1em;
+      margin: 0;
+      padding: 0;
+      color: #23324d;
+      font-size: clamp(.8rem, 3vh, 1.4rem);
+      font-weight: 800;
+      line-height: 1.1;
+      list-style: none;
+      text-align: center;
+      /* one row is line-height plus gap */
+      transform: translateY(calc(var(--shift, 0) * 1.2em));
+      transition: transform 300ms ease-out;
+    }
+
+    .alphabet[hidden] {
+      display: none;
+    }
+
+    .alphabet li.impossible {
+      color: #c3cad6;
+    }
+
+    @media (max-width: 720px) {
+      .alphabets {
+        position: static;
+        flex-direction: column;
+        gap: 6px;
+        width: min(100%, 560px);
+        margin: 0 auto 16px;
+        transform: none;
+      }
+
+      .alphabet {
+        flex-flow: row wrap;
+        justify-content: center;
+        gap: 2px 8px;
+        font-size: 1.1rem;
+        transform: none;
+      }
+    }
+
     @media (max-width: 420px) {
       main {
         padding: 24px 18px;
@@ -196,34 +279,34 @@
   </style>
 </head>
 <body>
+  <div class="alphabets" aria-hidden="true"></div>
   <main>
     <header>
-      <span class="mascot" aria-hidden="true">🦊</span>
-      <h1>Alfagok!</h1>
+      <h1><span class="mascot" aria-hidden="true">🦊</span>Alfagok kids<span class="mascot" aria-hidden="true">🦊</span></h1>
       <p class="intro">Raad het geheime woord. Staat jouw woord eerder of later in het alfabet?</p>
       <span class="counter" id="counter">0 pogingen</span>
     </header>
 
-    <section aria-label="Woorden die voor het geheime woord komen">
-      <p class="zone-label">⬆ Eerder in het alfabet</p>
+    <section class="guesses" aria-label="Woorden die voor het geheime woord komen">
       <ul class="guess-list" id="before-list" aria-live="polite"></ul>
+      <p class="zone-label">⬆ Eerder in het alfabet</p>
     </section>
 
     <form id="guess-form">
       <label for="guess-input" class="visually-hidden">Jouw woord</label>
-      <input id="guess-input" name="guess" type="text" list="word-options"
-        placeholder="Typ of kies een woord..." autocomplete="off" required>
-      <datalist id="word-options"></datalist>
+      <input id="guess-input" name="guess" type="text"
+        placeholder="Typ een woord..." autocomplete="off" required>
       <button id="guess-button" type="submit">Gok!</button>
     </form>
+    <p class="success" id="success" role="status" hidden></p>
 
-    <section aria-label="Woorden die na het geheime woord komen">
+    <section class="guesses" aria-label="Woorden die na het geheime woord komen">
       <p class="zone-label">⬇ Later in het alfabet</p>
       <ul class="guess-list" id="after-list" aria-live="polite"></ul>
     </section>
 
     <p class="message" id="message" role="status" aria-live="polite"></p>
-    <p class="help"><strong>Zo speel je:</strong> kies een woord uit de lijst en druk op Gok. Je ziet of het geheime woord eerder of later komt. Blijf raden tot je het vindt!</p>
+    <p class="help"><strong>Zo speel je:</strong> typ een woord en druk op Gok. Ken ik je woord niet, dan probeer ik een woord dat erop lijkt. Je ziet of het geheime woord eerder of later komt. Blijf raden tot je het vindt!</p>
   </main>
 
   <style>
@@ -241,41 +324,7 @@
   </style>
 
   <script>
-    const words = [
-      "aap", "aardappel", "aardbei", "achtbaan", "adem", "appel", "arm", "auto", "avond", "baby",
-      "bad", "bakker", "bal", "ballon", "banaan", "band", "bank", "bed", "been", "beer",
-      "beker", "berg", "bes", "bezem", "bij", "bijl", "bloem", "blok", "boek", "boer",
-      "boom", "boon", "boot", "bos", "boter", "boterham", "brief", "bril", "broek", "broer",
-      "brood", "brug", "bus", "cadeau", "cake", "circus", "citroen", "clown", "computer", "dak",
-      "das", "deur", "dier", "dino", "dinosaurus", "dokter", "dolfijn", "dorp", "draak", "droom",
-      "duif", "duim", "eekhoorn", "eend", "ei", "eiland", "emmer", "etui", "ezel", "familie",
-      "feest", "fiets", "film", "fles", "fluit", "foto", "gans", "gat", "geit", "geld",
-      "giraf", "gitaar", "glas", "glijbaan", "gras", "groente", "haan", "haar", "haas", "hagel",
-      "hamer", "hamster", "hand", "handdoek", "hart", "hek", "heks", "hemel", "hert", "hoed",
-      "hond", "honing", "hoofd", "hoorn", "huis", "hut", "ijs", "ijsbeer", "inkt", "jaar",
-      "jas", "jongen", "juf", "jurk", "kaars", "kaart", "kaas", "kabouter", "kalf", "kameel",
-      "kamer", "kapper", "kasteel", "kat", "kerk", "kers", "kind", "kip", "kist", "klok",
-      "knie", "knoop", "koe", "koek", "koekje", "koffer", "konijn", "koning", "koningin", "kop",
-      "kraan", "krant", "krokodil", "kroon", "kus", "laars", "lamp", "leeuw", "lepel", "les",
-      "letter", "lied", "lijm", "lucht", "maan", "mama", "mand", "markt", "meisje", "melk",
-      "mes", "mier", "moeder", "molen", "mond", "mug", "muis", "munt", "muur", "muziek",
-      "nacht", "nest", "net", "neus", "olifant", "oma", "oog", "oom", "oor", "opa",
-      "oven", "paard", "pad", "paddenstoel", "pan", "pannenkoek", "papa", "paraplu", "park", "pauw",
-      "peer", "pen", "pet", "piraat", "pizza", "plant", "plas", "poes", "politie", "pomp",
-      "pony", "pop", "post", "potlood", "prins", "prinses", "puzzel", "raam", "radio", "regen",
-      "regenboog", "reus", "riem", "ring", "rok", "roos", "rug", "rups", "sap", "schaap",
-      "schaar", "schaats", "schelp", "schip", "schoen", "schommel", "school", "schop", "schort", "sjaal",
-      "sla", "slak", "slang", "sleutel", "sneeuw", "snoep", "soep", "sok", "spel", "spiegel",
-      "spin", "spook", "stad", "ster", "stoel", "stok", "storm", "straat", "strand", "stroop",
-      "suiker", "taart", "tafel", "tak", "tand", "tante", "tas", "taxi", "telefoon", "tent",
-      "theepot", "tijger", "tomaat", "toren", "trap", "trein", "trommel", "trui", "tuin", "ui",
-      "uil", "vaas", "vader", "varken", "veer", "vinger", "vis", "vlag", "vlieg", "vliegtuig",
-      "vlinder", "voet", "vogel", "vork", "vos", "vriend", "vrouw", "vuur", "wafel", "wagen",
-      "walvis", "water", "week", "weg", "wiel", "wind", "winkel", "winter", "wolf", "wolk",
-      "worm", "worst", "zak", "zand", "zee", "zeef", "zeep", "zomer", "zon", "zus",
-      "zwaan"
-
-    ];
+    const words = "aaien,aanhanger,aanrecht,aap,aardappel,aardbei,aardbeving,aardig,aardrijkskunde,abrikoos,achtbaan,acrobaat,adem,ademen,adres,afval,agenda,agent,akker,alarm,album,amandel,ambulance,ananas,andijvie,anker,antwoord,antwoorden,apotheek,appel,appelflap,appelmoes,appeltaart,aquarium,arend,arm,arts,asbak,atlas,augurk,auto,avocado,avond,avondeten,avontuur,baard,baas,baby,bad,badkamer,badpak,bakfiets,bakje,bakken,bakker,bal,balk,balkon,ballerina,ballon,bami,banaan,band,bang,bank,banket,barbecue,batterij,bed,bedrijf,beek,been,beer,beest,beige,beker,bekken,bel,bellen,beloning,berg,berk,bes,bever,bezem,bezoek,bibliotheek,biefstuk,biet,bij,bijenkorf,bijl,bijten,binnenplaats,bitterbal,blad,bladzijde,blauw,blazen,blij,blijven,blik,bliksem,bloeden,bloem,bloemkool,bloempot,blok,boek,boekenkast,boeket,boer,boerderij,boeren,boerenkool,bolder,bonbon,bonen,boodschap,boom,boomgaard,boomhut,boon,boos,boot,bord,bordenwisser,borstel,bos,boter,boterham,bouillon,bouwen,bouwer,bouwplaats,brandnetel,brandweer,brandweerman,breed,breien,brief,brievenbus,bril,broccoli,broek,broer,brommer,brood,broodbeleg,broodje,broodrooster,brug,bruid,bruin,bruinbrood,brullen,bubbel,buik,buikpijn,buis,bureau,bus,bushalte,buurt,buurvrouw,cactus,cadeau,cake,camera,camping,capuchon,caravan,cavia,cello,cent,centrum,cheeta,chips,chocolade,chocoladepasta,chocomel,cijfer,circus,cirkel,citroen,clown,clubhuis,code,cola,compliment,computer,concert,container,courgette,cowboy,cracker,croissant,dadel,dag,dagboek,dak,dans,dansen,dapper,das,deeg,dekbed,deken,delen,denken,detective,deur,diamant,dictee,dief,diep,dier,dierentuin,dijk,dik,ding,dino,dinosaurus,diploma,dobbelsteen,dochter,dokter,dolfijn,dom,donker,dooier,doolhof,doos,dorp,douane,douche,draad,draaimolen,draak,dragen,drinkbeker,drinken,droog,droom,drop,druif,druiven,drukken,druppel,duif,duikbril,duiken,duim,duin,duizend,dun,duur,duwen,dweil,dwerg,echo,eekhoorn,eend,eenhoorn,eetkamer,eetlust,egel,ei,eigenaar,eikel,eiland,ekster,elastiek,elf,elleboog,emmer,energie,eng,engel,enkel,envelop,erwt,erwtensoep,etalage,eten,etentje,etui,euro,ezel,fabel,fabriek,fakkel,familie,fantasie,fazant,fee,feest,feestje,fel,fiets,fietsen,fietspad,fijn,film,flamingo,flat,fles,fluisteren,fluit,fluiten,fluitje,folder,fontein,fopspeen,fornuis,fort,foto,fout,framboos,frietje,frikandel,fris,fruit,fruitsla,gang,gans,garage,garnaal,gat,gazon,gebak,gebit,gedicht,geel,gehakt,gehaktbal,geheim,geit,gek,geld,geluk,gemeen,gemeente,gereedschap,geschenk,geschiedenis,gesp,geven,gezellig,gezicht,gezond,gier,gieter,gillen,giraf,gitaar,glad,glas,glijbaan,glijden,glimlach,glimworm,goed,gooien,gordijn,goud,graan,grap,grapje,gras,grasmaaier,graven,grens,griep,griffel,grijs,groeien,groen,groente,groenteboer,groeten,grond,groot,grot,gum,gym,gymles,gymzaal,haai,haak,haan,haar,haas,hagedis,hagel,hagelslag,hak,hakken,halen,halsketting,ham,hamburger,hamer,hamster,hand,handdoek,handschoen,handtas,hangmat,hard,haring,hark,harp,hart,haven,havik,heelal,heet,hek,heks,helikopter,helm,helpen,hemd,hemel,herfst,hert,heuvel,hijsen,hijskraan,hinkelen,hockey,hoed,hoek,hoest,hoesten,hok,hommel,hond,hongerig,honing,hoofd,hoofddoek,hoog,hooi,hooiberg,hoorn,horen,horizon,horloge,hotdog,hotel,huilen,huis,huiswerk,hulp,huppelen,hut,hutspot,hyena,idee,iglo,ijs,ijsbaan,ijsbeer,ijsco,ijsje,ijskast,ijzer,illustratie,inbreker,inkt,inktvis,insect,instrument,internet,ivoor,ja,jaar,jachthaven,jagen,jager,jaguar,jam,janken,jarige,jas,jeans,jeugd,joelen,joggingbroek,jojo,jong,jongen,jonkvrouw,journaal,juf,juffrouw,juichen,jungle,jurk,jus,juwelen,kaak,kaal,kaars,kaart,kaas,kabel,kabouter,kachel,kakkerlak,kalender,kalf,kalkoen,kalm,kameel,kamer,kammen,kampvuur,kanaal,kanarie,kaneel,kangoeroe,kano,kantoor,kapitein,kapot,kapper,kapstok,karamel,karretje,karton,kassa,kast,kastanje,kasteel,kat,kauwen,kauwgom,kerk,kerrie,kers,kerstboom,ketel,keuken,kever,kietelen,kiezel,kijken,kikker,kind,kinderwagen,kip,kipnugget,kist,kiwi,klappen,klaproos,klas,klaslokaal,klei,klein,kleur,kleuren,kleurpotlood,klimmen,klimop,klimrek,klok,kloppen,knakworst,knap,knapzak,knie,knikker,knippen,knoop,knuffel,knuffelen,koala,koe,koek,koekje,koekoek,koffer,koffie,kogel,kok,koken,kolibrie,komeet,komkommer,kompas,konijn,koning,koningin,koorts,kop,kopen,kopje,korf,korst,kort,koud,kraai,kraan,kraanvogel,krab,krant,kreeft,krekel,krentenbol,krijgen,krijt,kringgesprek,kroket,krokodil,krom,kroon,kruimel,kruipen,kruiwagen,kuiken,kunst,kurk,kus,kussen,kwaad,kwal,kwark,laag,laars,lachen,ladder,lammetje,lamp,landen,landkaart,lang,langzaam,lantaarn,lantaarnpaal,lasagne,lauw,lawaai,lawine,leeg,leesboek,leeuw,leguaan,lekker,lekkernij,lelie,lente,lepel,leraar,leren,les,letter,leuk,leuning,lezen,licht,lied,lief,lieveheersbeestje,liggen,lijm,lijn,lijster,likken,limonade,liniaal,lint,lippen,lof,logeerpartij,lokaal,loket,lolly,lopen,los,lucht,lucifer,lui,luid,luier,luik,luipaard,luisteren,lunch,lunchtrommel,maaltijd,maan,maandag,macaroni,mager,magneet,maken,makkelijk,mals,mama,mand,mandarijn,mandje,manege,mantel,markt,marmer,marmot,masker,matras,matroos,mayonaise,medaille,meester,meeuw,meisje,melk,melkboer,meloen,merel,mes,mestkever,meten,meter,middag,mier,moe,moeder,moeilijk,moestuin,mol,molen,mond,monnik,monster,mooi,mopperen,mossel,mosterd,motor,motorfiets,mouw,mozaïek,muesli,mug,muis,munt,mus,museum,muts,muur,muurkrant,muziek,naaimachine,naald,naam,nacht,nachtmerrie,nadenken,nagel,napje,narcis,nasi,nat,natuur,nee,neef,nest,net,netjes,neus,neushoorn,nicht,nieuw,nieuws,niezen,nijlpaard,noedels,noot,notenkraker,nul,nummer,oase,ober,oceaan,octopus,oester,oktober,olie,oliebol,olifant,olijf,oma,omelet,ontbijt,ontbijtkoek,onweer,oog,oogst,ooievaar,oom,oor,oorbel,opa,open,oranje,orgel,oud,ouder,oven,overall,paard,paars,paasei,paashaas,pad,paddenstoel,pakje,pakken,pakket,paleis,pan,panda,pannenkoek,pantoffel,papa,papegaai,papier,paprika,parachute,paraplu,parel,park,pasta,pastoor,patat,pauw,pauze,pedaal,peer,pelikaan,pen,pepernoot,perzik,pet,piano,picknick,piepen,pijl,pijp,pinda,pindakaas,pinguïn,pinksteren,pinpas,piraat,pizza,plaat,plafond,plakband,plakken,planeet,plank,plant,planten,plas,plassen,plat,plein,pleister,ploeg,plukken,poeder,poep,poepen,poes,poetsen,poffertjes,politie,pols,pomp,pompoen,pony,poort,pop,popcorn,popje,portemonnee,post,postbode,potje,potlood,praten,prei,prijs,prik,prins,prinses,proefwerk,proeven,pruim,prullenbak,pudding,puist,puntenslijper,puzzel,pyjama,raaf,raam,raar,raden,radijs,radio,raket,rammelaar,rapport,rat,recept,recht,regen,regenboog,regenjas,reiger,reis,rek,rekenboek,rekenen,rennen,reus,ridder,riem,riet,rijbewijs,rijden,rijk,rijp,rijst,ring,rits,rivier,rob,robot,roepen,rok,rond,rondje,rood,roos,rooster,rotonde,roze,rozijn,rug,rugzak,ruiken,ruilen,ruimte,ruit,rups,rustig,saai,salade,salami,sandaal,sap,saus,schaakbord,schaap,schaar,schaats,schaatsen,schatkist,schelp,schep,scherp,schilder,schilderen,schildersezel,schildpad,schip,schoen,schommel,schommelen,school,schoolbel,schoolbord,schoolplein,schoolreis,schooltas,schoon,schoorsteen,schop,schoppen,schorpioen,schort,schotel,schreeuwen,schrift,schrijven,sinaasappel,sinterklaas,sjaal,skateboard,ski,sla,slaapkamer,slagroom,slak,slang,slapen,slee,slepen,sleutel,sleutelbos,slim,slingers,sloot,slot,sluipen,smal,smullen,smurf,snavel,sneeuw,sneeuwpop,snel,snijden,snoep,snoepen,snoepje,snor,soep,sok,spaarpot,spaghetti,speelkwartier,speeltuin,speen,speer,spek,spel,spelen,spelling,spiegel,spijker,spin,spinazie,spook,sport,springen,sprookje,spruit,spruitjes,staan,staart,stad,stal,stamppot,standbeeld,stappen,steen,stempel,step,ster,sterk,stevig,stift,stil,stoeien,stoel,stoep,stoer,stofzuiger,stok,stom,stoomboot,stoplicht,storm,stout,straat,strand,strik,strikken,stroom,stroop,stroopwafel,stropdas,stuiteren,stuur,suiker,suikerspin,superheld,taai,taakkaart,taart,tafel,tafels,tak,tand,tandarts,tandenborstel,tante,tas,taxi,tekenen,tekenfilm,tekening,telefoon,televisie,tellen,tent,theater,thee,theepot,tijd,tijger,timmeren,toeter,toetje,toets,toilet,tol,tomaat,tong,topografie,toren,tortilla,tosti,tovenaar,toveren,toverstaf,tractor,trampoline,trap,trein,trekken,trommel,tros,trots,trui,tuin,tuinbonen,tuinman,tulp,tunnel,turnen,turquoise,tweeling,ufo,ui,uier,uil,uitje,uitnodiging,uitstapje,uniform,universum,vaas,vader,vakantie,valk,vallen,vangen,varen,varken,varkentje,vechten,veer,veld,verdrietig,verf,vergiet,verhaal,verjaardag,verlegen,verstoppen,vertellen,vest,veter,vies,vijver,vinger,vingerhoed,viool,vis,vissen,vla,vlag,vlek,vlieg,vliegen,vliegenzwam,vlieger,vliegtuig,vlinder,vloer,vlonder,vlot,vlug,voelen,voet,voetbal,voetballen,vogel,vogelhuisje,vol,volleybal,voorlezen,vork,vos,vouwen,vreemd,vriend,vriendelijk,vriendin,vrolijk,vrouw,vuilnisman,vuilniszak,vulkan,vuur,vuurtoren,vuurwerk,waaier,wachten,wafel,wagen,walvis,wandelen,warm,wasmachine,wassen,water,watermeloen,waterval,wc,wedstrijd,week,weg,weide,weiland,wekker,wereld,werkblad,werken,werpen,wesp,wiebelen,wieg,wiel,wijk,wijs,wild,wilg,wind,windmolen,winkel,winnen,winter,wip,wippen,wit,witlof,woestijn,wolf,wolk,wolkenkrabber,wonen,woordenboek,worm,worst,wortel,yoghurt,zaag,zacht,zadel,zagen,zak,zakdoek,zakmes,zalf,zalm,zand,zanger,zebra,zee,zeef,zeehond,zeemeermin,zeep,zeerover,zeester,zeil,zeilboot,zeilen,zeker,ziek,zielig,zien,zilver,zingen,zitten,zoeken,zoenen,zoet,zolder,zomer,zon,zonnebloem,zonnig,zoon,zout,zus,zuster,zuur,zuurkool,zwaaien,zwaan,zwaar,zwaard,zwaluw,zwart,zweefvliegtuig,zwembad,zwemmen,zwijn".split(",");
 
     const collator = new Intl.Collator("nl-NL", { sensitivity: "base" });
     words.sort(collator.compare);
@@ -287,17 +336,105 @@
 
     const form = document.querySelector("#guess-form");
     const input = document.querySelector("#guess-input");
-    const button = document.querySelector("#guess-button");
-    const options = document.querySelector("#word-options");
     const beforeList = document.querySelector("#before-list");
     const afterList = document.querySelector("#after-list");
     const counter = document.querySelector("#counter");
     const message = document.querySelector("#message");
+    const success = document.querySelector("#success");
+    const alphabets = document.querySelector(".alphabets");
 
-    for (const word of words) {
-      const option = document.createElement("option");
-      option.value = word;
-      options.append(option);
+    // The alphabet for the letter at this position, created when first needed.
+    function letterList(position) {
+      while (alphabets.children.length <= position) {
+        const list = document.createElement("ol");
+        list.className = "alphabet";
+        for (const letter of "abcdefghijklmnopqrstuvwxyz") {
+          const item = document.createElement("li");
+          item.textContent = letter;
+          list.append(item);
+        }
+        alphabets.append(list);
+      }
+      return alphabets.children[position];
+    }
+
+    // Grey out the letters no remaining candidate word has at this position.
+    // Returns the indexes of the letters that are still possible.
+    function markLetters(list, candidates, position) {
+      const possible = [];
+      for (const [index, item] of [...list.children].entries()) {
+        const isPossible = candidates.some(word => collator.compare(word[position] ?? "", item.textContent) === 0);
+        item.classList.toggle("impossible", !isPossible);
+        if (isPossible) possible.push(index);
+      }
+      return possible;
+    }
+
+    function sameLetterAt(candidates, position) {
+      return candidates.every(word =>
+        word[position] !== undefined && collator.compare(word[position], candidates[0][position]) === 0
+      );
+    }
+
+    const maxAlphabets = 6;
+
+    // Show an alphabet for the next letter as long as all previous letters are certain,
+    // up to maxAlphabets letters. The alphabets are shifted so the certain letters form
+    // a row in the middle, with the possible letters of the last alphabet centered on it.
+    function renderAlphabet(candidates) {
+      let position = 0;
+      const possible = [markLetters(letterList(0), candidates, 0)];
+      while (position < maxAlphabets - 1 && sameLetterAt(candidates, position)) {
+        position++;
+        possible.push(markLetters(letterList(position), candidates, position));
+      }
+      const middle = 12.5;
+      for (const [index, list] of [...alphabets.children].entries()) {
+        list.hidden = index > position;
+        const letters = possible[index] ?? [];
+        const focus = letters.length ? Math.round(letters.reduce((a, b) => a + b) / letters.length) : middle;
+        list.style.setProperty("--shift", position > 0 && !list.hidden ? middle - focus : 0);
+      }
+    }
+
+    renderAlphabet(words);
+
+    function editDistance(a, b) {
+      let previous = Array.from({ length: b.length + 1 }, (_, i) => i);
+      for (let i = 1; i <= a.length; i++) {
+        const current = [i];
+        for (let j = 1; j <= b.length; j++) {
+          const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+          current[j] = Math.min(previous[j] + 1, current[j - 1] + 1, previous[j - 1] + cost);
+        }
+        previous = current;
+      }
+      return previous[b.length];
+    }
+
+    // Typos (at most 2 letters off) map to the closest spelling, anything else
+    // to the list word that follows it alphabetically. The first letter is kept,
+    // so this returns undefined if no list word starts with the typed letter.
+    function closestWord(typed) {
+      const exact = words.find(word => collator.compare(word, typed) === 0);
+      if (exact) return exact;
+
+      const candidates = words.filter(word => collator.compare(word[0], typed[0]) === 0);
+      if (candidates.length === 0) return undefined;
+
+      const lower = typed.toLocaleLowerCase("nl-NL");
+      let best = candidates[0];
+      let bestDistance = Infinity;
+      for (const word of candidates) {
+        const distance = editDistance(lower, word);
+        if (distance < bestDistance) {
+          best = word;
+          bestDistance = distance;
+        }
+      }
+      if (bestDistance <= 2) return best;
+
+      return candidates.find(word => collator.compare(word, typed) > 0) ?? candidates[candidates.length - 1];
     }
 
     function renderGuesses(list, guesses) {
@@ -310,35 +447,44 @@
       }
     }
 
-    form.addEventListener("submit", event => {
-      event.preventDefault();
-      const typed = input.value.trim();
-      const guess = words.find(word => collator.compare(word, typed) === 0);
+    const storageKey = "alfagok-kinderen";
 
-      if (!guess) {
-        message.textContent = "Kies een woord uit de lijst, dan weet ik zeker welk woord je bedoelt.";
-        input.focus();
-        return;
-      }
-      if (guessed.has(guess)) {
-        message.textContent = "Dat woord heb je al geprobeerd. Kies een ander woord!";
-        input.select();
-        return;
-      }
+    function saveGuesses() {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify({ day: todayNumber, guesses: [...guessed] }));
+      } catch {}
+    }
 
+    function loadGuesses() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(storageKey));
+        return saved && saved.day === todayNumber ? saved.guesses : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function addGuess(guess) {
       guessed.add(guess);
       input.dataset.latestGuess = guess;
       counter.textContent = `${guessed.size} ${guessed.size === 1 ? "poging" : "pogingen"}`;
 
       const sorted = [...guessed].sort(collator.compare);
-      renderGuesses(beforeList, sorted.filter(word => collator.compare(word, answer) < 0));
-      renderGuesses(afterList, sorted.filter(word => collator.compare(word, answer) > 0));
+      const before = sorted.filter(word => collator.compare(word, answer) < 0);
+      const after = sorted.filter(word => collator.compare(word, answer) > 0);
+      renderGuesses(beforeList, before);
+      renderGuesses(afterList, after);
+      const lowest = before.at(-1);
+      const highest = after[0];
+      renderAlphabet(guess === answer ? [answer] : words.filter(word =>
+        (!lowest || collator.compare(word, lowest) > 0) && (!highest || collator.compare(word, highest) < 0)
+      ));
 
       if (guess === answer) {
-        message.textContent = `Hoera! Het geheime woord is ${answer}. Goed geraden!`;
-        input.value = answer;
-        input.disabled = true;
-        button.disabled = true;
+        success.textContent = `Hoera! Het geheime woord is ${answer}. Goed geraden!`;
+        success.hidden = false;
+        form.hidden = true;
+        message.textContent = "";
         return;
       }
 
@@ -347,7 +493,77 @@
         : `${guess} komt later. Het geheime woord staat dus eerder!`;
       input.value = "";
       input.focus();
+    }
+
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+      const typed = input.value.trim();
+      const guess = closestWord(typed);
+      if (!guess) {
+        message.textContent = `Ik ken geen woorden met de ${typed[0].toLocaleLowerCase("nl-NL")}. Probeer een ander woord!`;
+        input.select();
+        return;
+      }
+      const substituted = collator.compare(guess, typed) !== 0;
+
+      if (guessed.has(guess)) {
+        message.textContent = substituted
+          ? `"${typed}" ken ik niet. Het lijkt op ${guess}, maar dat woord heb je al geprobeerd. Kies een ander woord!`
+          : "Dat woord heb je al geprobeerd. Kies een ander woord!";
+        input.select();
+        return;
+      }
+
+      addGuess(guess);
+      saveGuesses();
+      if (substituted) {
+        message.textContent = `"${typed}" ken ik niet, dus ik probeer ${guess}. ${message.textContent}`;
+      }
+      if (guess === answer) confetti();
     });
+
+    // Burst of confetti out of the success banner, falling down with gravity.
+    function confetti() {
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const colors = ["#e85d45", "#ffbf47", "#a8d8a2", "#2b8a4e", "#6ea8fe", "#ff9a8b"];
+      const banner = success.getBoundingClientRect();
+      // Air drag slows the pieces down quickly, after which they flutter down at fallSpeed.
+      const drag = 2;
+      const fallSpeed = 350;
+      const duration = 4.5;
+      for (let i = 0; i < 250; i++) {
+        const piece = document.createElement("span");
+        piece.className = "confetti";
+        piece.style.left = `${banner.left + Math.random() * banner.width}px`;
+        piece.style.top = `${banner.top + Math.random() * banner.height}px`;
+        piece.style.background = colors[i % colors.length];
+        document.body.append(piece);
+
+        // mostly upwards, a bit to the sides
+        const angle = -Math.PI / 2 + (Math.random() - .5) * Math.PI * 1.2;
+        const speed = 1000 + Math.random() * 1400;
+        const vx = Math.cos(angle) * speed;
+        const vy = Math.sin(angle) * speed;
+        const spin = (Math.random() - .5) * 1440;
+        const keyframes = [];
+        for (let step = 0; step <= 30; step++) {
+          const t = duration * step / 30;
+          const slowdown = (1 - Math.exp(-drag * t)) / drag;
+          const x = vx * slowdown;
+          const y = (vy - fallSpeed) * slowdown + fallSpeed * t;
+          keyframes.push({
+            transform: `translate(${x}px, ${y}px) rotate(${spin * step / 30}deg)`,
+            opacity: step === 30 ? 0 : 1,
+          });
+        }
+        piece.animate(keyframes, { duration: duration * 1000, easing: "linear" })
+          .finished.then(() => piece.remove());
+      }
+    }
+
+    for (const guess of loadGuesses()) {
+      if (words.includes(guess)) addGuess(guess);
+    }
   </script>
 </body>
 </html>

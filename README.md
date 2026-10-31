@@ -24,4 +24,4 @@ Als je het woord van de dag geraden hebt staat er in plaats van `[input]` een me
 
 ## Kinderversie
 
-Open `index.html` in een browser om de kinderversie te spelen. Het spel kiest dagelijks een woord uit een ingebouwde lijst met eenvoudige Nederlandse kinderwoorden. Gok een woord uit de keuzelijst; je pogingen verschijnen boven of onder het invoerveld om te laten zien waar het geheime woord in het alfabet staat. Er zijn geen externe bibliotheken of netwerkverbinding nodig.
+Open `index.html` in een browser om de kinderversie te spelen. Het spel kiest dagelijks een woord uit een ingebouwde lijst met eenvoudige Nederlandse kinderwoorden. Typ een woord; staat het niet in de lijst, dan gebruikt het spel een woord met dezelfde beginletter dat het meest lijkt op wat je typte (bij een tikfout) of dat er in het alfabet direct na komt. Je pogingen verschijnen boven of onder het invoerveld om te laten zien waar het geheime woord in het alfabet staat. Er zijn geen externe bibliotheken of netwerkverbinding nodig.
