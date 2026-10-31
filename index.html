@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fff8e8">
+  <title>Alfagok - raad het woord!</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: "Trebuchet MS", "Arial Rounded MT Bold", sans-serif;
+      color: #23324d;
+      background: #fff8e8;
+      font-synthesis: none;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      padding: 32px 16px;
+      background:
+        radial-gradient(circle at 8% 12%, #ffdf79 0 7px, transparent 8px),
+        radial-gradient(circle at 92% 18%, #ff9a8b 0 8px, transparent 9px),
+        radial-gradient(circle at 12% 86%, #a8d8a2 0 9px, transparent 10px),
+        #fff8e8;
+    }
+
+    main {
+      width: min(100%, 560px);
+      margin: 0 auto;
+      padding: 30px;
+      border: 3px solid #23324d;
+      border-radius: 28px;
+      background: #fff;
+      box-shadow: 8px 8px 0 #23324d;
+    }
+
+    header {
+      text-align: center;
+    }
+
+    .mascot {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 54px;
+      line-height: 1;
+    }
+
+    h1 {
+      margin: 8px 0;
+      color: #e85d45;
+      font-size: clamp(2rem, 8vw, 3rem);
+      letter-spacing: -1px;
+    }
+
+    .intro {
+      margin: 0 auto 24px;
+      max-width: 390px;
+      font-size: 1.05rem;
+      line-height: 1.5;
+    }
+
+    .counter {
+      display: inline-block;
+      margin-bottom: 16px;
+      padding: 7px 13px;
+      border-radius: 999px;
+      background: #e9f4e5;
+      font-weight: 700;
+    }
+
+    .guess-list {
+      min-height: 54px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .guess-list li {
+      width: fit-content;
+      margin: 6px auto;
+      padding: 7px 14px;
+      border: 2px solid #dfe6ef;
+      border-radius: 12px;
+      background: #f7f9fc;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .guess-list li.just-guessed {
+      border-color: #ffbf47;
+      background: #fff2ce;
+      animation: pop 220ms ease-out;
+    }
+
+    @keyframes pop {
+      from { transform: scale(.85); }
+      to { transform: scale(1); }
+    }
+
+    .zone-label {
+      margin: 8px 0 2px;
+      color: #53617a;
+      font-size: .88rem;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    form {
+      display: flex;
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    input {
+      width: 100%;
+      min-width: 0;
+      padding: 13px 15px;
+      border: 3px solid #23324d;
+      border-radius: 14px;
+      color: inherit;
+      font: inherit;
+      font-size: 1.05rem;
+    }
+
+    input:focus-visible,
+    button:focus-visible {
+      outline: 4px solid #ffbf47;
+      outline-offset: 3px;
+    }
+
+    button {
+      flex: 0 0 auto;
+      padding: 12px 17px;
+      border: 3px solid #23324d;
+      border-radius: 14px;
+      background: #ffbf47;
+      color: #23324d;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button:hover:not(:disabled) {
+      background: #ffd36f;
+      transform: translateY(-1px);
+    }
+
+    button:disabled,
+    input:disabled {
+      cursor: not-allowed;
+      opacity: .65;
+    }
+
+    .message {
+      min-height: 28px;
+      margin: 12px 0 0;
+      color: #315e42;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .help {
+      margin: 20px 0 0;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: #f1f5ff;
+      font-size: .95rem;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 420px) {
+      main {
+        padding: 24px 18px;
+        box-shadow: 5px 5px 0 #23324d;
+      }
+
+      form {
+        flex-direction: column;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <span class="mascot" aria-hidden="true">🦊</span>
+      <h1>Alfagok!</h1>
+      <p class="intro">Raad het geheime woord. Staat jouw woord eerder of later in het alfabet?</p>
+      <span class="counter" id="counter">0 pogingen</span>
+    </header>
+
+    <section aria-label="Woorden die voor het geheime woord komen">
+      <p class="zone-label">⬆ Eerder in het alfabet</p>
+      <ul class="guess-list" id="before-list" aria-live="polite"></ul>
+    </section>
+
+    <form id="guess-form">
+      <label for="guess-input" class="visually-hidden">Jouw woord</label>
+      <input id="guess-input" name="guess" type="text" list="word-options"
+        placeholder="Typ of kies een woord..." autocomplete="off" required>
+      <datalist id="word-options"></datalist>
+      <button id="guess-button" type="submit">Gok!</button>
+    </form>
+
+    <section aria-label="Woorden die na het geheime woord komen">
+      <p class="zone-label">⬇ Later in het alfabet</p>
+      <ul class="guess-list" id="after-list" aria-live="polite"></ul>
+    </section>
+
+    <p class="message" id="message" role="status" aria-live="polite"></p>
+    <p class="help"><strong>Zo speel je:</strong> kies een woord uit de lijst en druk op Gok. Je ziet of het geheime woord eerder of later komt. Blijf raden tot je het vindt!</p>
+  </main>
+
+  <style>
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+
+  <script>
+    const words = [
+      "aap", "aardappel", "aardbei", "achtbaan", "adem", "appel", "arm", "auto", "avond", "baby",
+      "bad", "bakker", "bal", "ballon", "banaan", "band", "bank", "bed", "been", "beer",
+      "beker", "berg", "bes", "bezem", "bij", "bijl", "bloem", "blok", "boek", "boer",
+      "boom", "boon", "boot", "bos", "boter", "boterham", "brief", "bril", "broek", "broer",
+      "brood", "brug", "bus", "cadeau", "cake", "circus", "citroen", "clown", "computer", "dak",
+      "das", "deur", "dier", "dino", "dinosaurus", "dokter", "dolfijn", "dorp", "draak", "droom",
+      "duif", "duim", "eekhoorn", "eend", "ei", "eiland", "emmer", "etui", "ezel", "familie",
+      "feest", "fiets", "film", "fles", "fluit", "foto", "gans", "gat", "geit", "geld",
+      "giraf", "gitaar", "glas", "glijbaan", "gras", "groente", "haan", "haar", "haas", "hagel",
+      "hamer", "hamster", "hand", "handdoek", "hart", "hek", "heks", "hemel", "hert", "hoed",
+      "hond", "honing", "hoofd", "hoorn", "huis", "hut", "ijs", "ijsbeer", "inkt", "jaar",
+      "jas", "jongen", "juf", "jurk", "kaars", "kaart", "kaas", "kabouter", "kalf", "kameel",
+      "kamer", "kapper", "kasteel", "kat", "kerk", "kers", "kind", "kip", "kist", "klok",
+      "knie", "knoop", "koe", "koek", "koekje", "koffer", "konijn", "koning", "koningin", "kop",
+      "kraan", "krant", "krokodil", "kroon", "kus", "laars", "lamp", "leeuw", "lepel", "les",
+      "letter", "lied", "lijm", "lucht", "maan", "mama", "mand", "markt", "meisje", "melk",
+      "mes", "mier", "moeder", "molen", "mond", "mug", "muis", "munt", "muur", "muziek",
+      "nacht", "nest", "net", "neus", "olifant", "oma", "oog", "oom", "oor", "opa",
+      "oven", "paard", "pad", "paddenstoel", "pan", "pannenkoek", "papa", "paraplu", "park", "pauw",
+      "peer", "pen", "pet", "piraat", "pizza", "plant", "plas", "poes", "politie", "pomp",
+      "pony", "pop", "post", "potlood", "prins", "prinses", "puzzel", "raam", "radio", "regen",
+      "regenboog", "reus", "riem", "ring", "rok", "roos", "rug", "rups", "sap", "schaap",
+      "schaar", "schaats", "schelp", "schip", "schoen", "schommel", "school", "schop", "schort", "sjaal",
+      "sla", "slak", "slang", "sleutel", "sneeuw", "snoep", "soep", "sok", "spel", "spiegel",
+      "spin", "spook", "stad", "ster", "stoel", "stok", "storm", "straat", "strand", "stroop",
+      "suiker", "taart", "tafel", "tak", "tand", "tante", "tas", "taxi", "telefoon", "tent",
+      "theepot", "tijger", "tomaat", "toren", "trap", "trein", "trommel", "trui", "tuin", "ui",
+      "uil", "vaas", "vader", "varken", "veer", "vinger", "vis", "vlag", "vlieg", "vliegtuig",
+      "vlinder", "voet", "vogel", "vork", "vos", "vriend", "vrouw", "vuur", "wafel", "wagen",
+      "walvis", "water", "week", "weg", "wiel", "wind", "winkel", "winter", "wolf", "wolk",
+      "worm", "worst", "zak", "zand", "zee", "zeef", "zeep", "zomer", "zon", "zus",
+      "zwaan"
+
+    ];
+
+    const collator = new Intl.Collator("nl-NL", { sensitivity: "base" });
+    words.sort(collator.compare);
+
+    const today = new Date();
+    const todayNumber = Math.floor(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()) / 86400000);
+    const answer = words[((todayNumber % words.length) + words.length) % words.length];
+    const guessed = new Set();
+
+    const form = document.querySelector("#guess-form");
+    const input = document.querySelector("#guess-input");
+    const button = document.querySelector("#guess-button");
+    const options = document.querySelector("#word-options");
+    const beforeList = document.querySelector("#before-list");
+    const afterList = document.querySelector("#after-list");
+    const counter = document.querySelector("#counter");
+    const message = document.querySelector("#message");
+
+    for (const word of words) {
+      const option = document.createElement("option");
+      option.value = word;
+      options.append(option);
+    }
+
+    function renderGuesses(list, guesses) {
+      list.replaceChildren();
+      for (const word of guesses) {
+        const item = document.createElement("li");
+        item.textContent = word;
+        if (word === input.dataset.latestGuess) item.classList.add("just-guessed");
+        list.append(item);
+      }
+    }
+
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+      const typed = input.value.trim();
+      const guess = words.find(word => collator.compare(word, typed) === 0);
+
+      if (!guess) {
+        message.textContent = "Kies een woord uit de lijst, dan weet ik zeker welk woord je bedoelt.";
+        input.focus();
+        return;
+      }
+      if (guessed.has(guess)) {
+        message.textContent = "Dat woord heb je al geprobeerd. Kies een ander woord!";
+        input.select();
+        return;
+      }
+
+      guessed.add(guess);
+      input.dataset.latestGuess = guess;
+      counter.textContent = `${guessed.size} ${guessed.size === 1 ? "poging" : "pogingen"}`;
+
+      const sorted = [...guessed].sort(collator.compare);
+      renderGuesses(beforeList, sorted.filter(word => collator.compare(word, answer) < 0));
+      renderGuesses(afterList, sorted.filter(word => collator.compare(word, answer) > 0));
+
+      if (guess === answer) {
+        message.textContent = `Hoera! Het geheime woord is ${answer}. Goed geraden!`;
+        input.value = answer;
+        input.disabled = true;
+        button.disabled = true;
+        return;
+      }
+
+      message.textContent = collator.compare(guess, answer) < 0
+        ? `${guess} komt eerder. Het geheime woord staat dus later!`
+        : `${guess} komt later. Het geheime woord staat dus eerder!`;
+      input.value = "";
+      input.focus();
+    });
+  </script>
+</body>
+</html>
