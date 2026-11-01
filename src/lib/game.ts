@@ -72,6 +72,8 @@ export function alphabetColumns(candidates: string[], maxColumns = 6): AlphabetC
       shift: 0,
     });
     if (position >= maxColumns - 1 || !sameLetterAt(candidates, position)) break;
+    // no alphabet for a letter that none of the words have
+    if (candidates.every(word => word.length <= position + 1)) break;
     position++;
   }
 

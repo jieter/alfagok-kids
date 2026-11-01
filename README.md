@@ -32,10 +32,10 @@ Svelte + TypeScript, met Vite en Vitest.
 
 ```sh
 npm install
-npm run dev      # ontwikkelserver
+npm run dev      # ontwikkelserver op http://localhost:5180/alfagok/
 npm test         # tests (Vitest)
 npm run check    # typecontrole (svelte-check)
 npm run build    # statische site in dist/
 ```
 
-De spellogica staat in `src/lib/game.ts`, de interface in `src/App.svelte`. `woorden.txt` wordt bij het bouwen in de app meegenomen.
+De spellogica staat in `src/lib/game.ts`, de interface in `src/App.svelte`. `woorden.txt` wordt bij het bouwen in de app meegenomen. De site wordt gebouwd voor `/alfagok/` (zie `base` in `vite.config.ts`).

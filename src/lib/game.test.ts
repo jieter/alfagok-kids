@@ -74,6 +74,11 @@ describe("alphabetColumns", () => {
     expect(alphabetColumns(["zee", "zeef"]).map(possibleLetters)).toEqual(["z", "e", "e", "f"]);
   });
 
+  it("does not add an alphabet after the last letter of the word", () => {
+    expect(alphabetColumns(["angst"]).map(possibleLetters)).toEqual(["a", "n", "g", "s", "t"]);
+    expect(alphabetColumns(["kat"])).toHaveLength(3);
+  });
+
   it("stops at six alphabets", () => {
     expect(alphabetColumns(["dobbelsteen"])).toHaveLength(6);
   });
