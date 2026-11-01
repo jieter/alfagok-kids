@@ -11,10 +11,19 @@
     commonPrefix,
     dayNumber,
     findWord,
+    formatDay,
     parseWords,
     splitGuesses,
   } from "./lib/game";
-  import { loadGuesses, loadOnlyListWords, saveGuesses, saveOnlyListWords } from "./lib/storage";
+  import {
+    clearGuesses,
+    loadGuesses,
+    loadHistory,
+    loadOnlyListWords,
+    saveGuesses,
+    saveOnlyListWords,
+    saveSolved,
+  } from "./lib/storage";
 
   const words = parseWords(wordsText);
   const known = new Set(words);
@@ -27,6 +36,14 @@
       : `${guess} komt later. Het geheime woord staat dus eerder!`;
   }
 
+  // ?clear in the URL forgets today's guesses; it is removed so a reload does not clear again
+  const url = new URL(location.href);
+  if (url.searchParams.has("clear")) {
+    clearGuesses();
+    url.searchParams.delete("clear");
+    history.replaceState(null, "", url);
+  }
+
   const restored = loadGuesses(day);
   const lastRestored = restored.at(-1);
 
@@ -35,11 +52,10 @@
   let typed = $state("");
   let message = $state(lastRestored && lastRestored !== answer ? hint(lastRestored) : "");
   let onlyListWords = $state(loadOnlyListWords());
+  let solvedWords = $state(loadHistory());
   let input: HTMLInputElement | undefined = $state();
   let success: HTMLElement | undefined = $state();
 
-  // Words that are not in the list are shown, but do not count as an attempt.
-  const attempts = $derived(guessed.filter(word => known.has(word)).length);
   const won = $derived(guessed.includes(answer));
   const split = $derived(splitGuesses(guessed, answer));
   const candidates = $derived(won ? [answer] : candidatesBetween(words, split.before.at(-1), split.after[0]));
@@ -70,6 +86,7 @@
     message = guess === answer ? "" : hint(guess);
 
     if (guess === answer) {
+      solvedWords = saveSolved({ day, word: answer, attempts: guessed.length });
       await tick();
       if (success) confetti(success);
     } else {
@@ -79,6 +96,10 @@
 
   onMount(() => {
     if (!won) typed = commonPrefix(candidates);
+    // also for games won before the history was kept
+    if (won && !solvedWords.some(entry => entry.day === day)) {
+      solvedWords = saveSolved({ day, word: answer, attempts: guessed.length });
+    }
     if (won && success) confetti(success);
   });
 </script>
@@ -89,7 +110,7 @@
   <header>
     <h1><span class="mascot" aria-hidden="true">🦊</span>Alfagok kids<span class="mascot" aria-hidden="true">🦊</span></h1>
     <p class="intro" class:played={guessed.length > 0}>Raad het geheime woord. Staat jouw woord eerder of later in het alfabet?</p>
-    <span class="counter">{attempts} {attempts === 1 ? "poging" : "pogingen"}</span>
+    <span class="counter">{guessed.length} {guessed.length === 1 ? "poging" : "pogingen"}</span>
   </header>
 
   <section class="guesses" aria-label="Woorden die voor het geheime woord komen">
@@ -127,7 +148,7 @@
     {#if onlyListWords}
       Ken ik je woord niet, dan mag je een ander woord proberen.
     {:else}
-      Ken ik je woord niet, dan wordt het rood, maar dat telt niet als poging.
+      Ken ik je woord niet, dan wordt het rood.
     {/if}
     Je ziet of het geheime woord eerder of later komt. Blijf raden tot je het vindt!
   </p>
@@ -135,6 +156,21 @@
     <input type="checkbox" role="switch" bind:checked={onlyListWords} onchange={() => saveOnlyListWords(onlyListWords)}>
     Alleen woorden uit de woordenlijst
   </label>
+
+  {#if solvedWords.length > 0}
+    <section class="history">
+      <h2>Eerder geraden</h2>
+      <ul>
+        {#each solvedWords as entry (entry.day)}
+          <li>
+            <span class="history-day">{formatDay(entry.day)}</span>
+            <strong>{entry.word}</strong>
+            <span>{entry.attempts} {entry.attempts === 1 ? "poging" : "pogingen"}</span>
+          </li>
+        {/each}
+      </ul>
+    </section>
+  {/if}
 </main>
 
 <style>
@@ -363,6 +399,37 @@
   .setting input:focus-visible {
     outline: 4px solid #ffbf47;
     outline-offset: 2px;
+  }
+
+  .history {
+    margin: 20px 0 0;
+    padding-top: 14px;
+    border-top: 2px dashed #dfe6ef;
+    font-size: .95rem;
+  }
+
+  .history h2 {
+    margin: 0 0 8px;
+    color: #53617a;
+    font-size: .95rem;
+    text-align: center;
+  }
+
+  .history ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .history li {
+    display: grid;
+    grid-template-columns: 7.5em 1fr auto;
+    gap: 8px;
+    padding: 3px 0;
+  }
+
+  .history-day {
+    color: #53617a;
   }
 
   @media (max-width: 420px) {

@@ -19,6 +19,7 @@ aardrijkskunde
 aardworm
 abrikoos
 achtbaan
+achter
 acrobaat
 acteur
 adder
@@ -158,6 +159,7 @@ bijten
 binnenbad
 binnenplaats
 bitterbal
+blaas
 blad
 bladblazer
 bladluis
@@ -225,6 +227,7 @@ bouwblok
 bouwen
 bouwer
 bouwplaats
+boven
 bovenbuur
 brandblusser
 brandnetel
@@ -333,6 +336,7 @@ dans
 dansen
 danser
 dapper
+darm
 das
 dauw
 deeg
@@ -652,6 +656,7 @@ hamsterwang
 hamsterwiel
 hand
 handdoek
+handen
 handpop
 handschoen
 handtas
@@ -1049,6 +1054,7 @@ letter
 letterkoekje
 leuk
 leuning
+lever
 lezen
 libel
 lichaam
@@ -1080,6 +1086,7 @@ logeerpartij
 lokaal
 loket
 lolly
+longen
 loopfiets
 loopkever
 lopen
@@ -1098,6 +1105,7 @@ luipaard
 luisteren
 lunch
 lunchtrommel
+maag
 maaltijd
 maan
 maandag
@@ -1230,6 +1238,7 @@ neus
 neushoorn
 neusje
 nicht
+nieren
 nieuw
 nieuwjaar
 nieuws
@@ -1254,6 +1263,7 @@ oceaan
 ochtend
 octopus
 oester
+oksel
 oktober
 olie
 oliebol
@@ -1264,6 +1274,7 @@ olijf
 oma
 omelet
 omslagdoek
+onder
 onderbroek
 ondergoed
 onderzeeboot
@@ -1420,6 +1431,7 @@ pop
 popcorn
 popcornmachine
 popje
+poppen
 poppenhuis
 poppenkast
 portemonnee
@@ -1451,12 +1463,14 @@ puzzel
 puzzelstuk
 pyjama
 pyjamafeest
+quiz
 raaf
 raam
 raamkozijn
 raampje
 raar
 racefiets
+rad
 raden
 radijs
 radio
@@ -1479,9 +1493,12 @@ reiskoffer
 rek
 rekenboek
 rekenen
+ren
 rennen
 reus
 reuzenrad
+rib
+ribben
 ridder
 ridderzaal
 riem
@@ -1494,6 +1511,7 @@ rijp
 rijst
 rijstpap
 rijstwafel
+rillen
 ring
 ringslang
 rits
@@ -1506,6 +1524,7 @@ roeiboot
 roeispaan
 roepen
 rok
+rollen
 rolschaats
 rolstoel
 rond
@@ -1513,6 +1532,7 @@ rondje
 rood
 roodborst
 roodborstje
+rook
 roos
 rooster
 rotonde
@@ -1540,18 +1560,24 @@ sabeltandtijger
 salade
 salamander
 salami
+samen
 sandaal
 sap
 saus
 schaakbord
 schaakstuk
+schaal
 schaap
 schaapje
 schaar
 schaats
 schaatsen
+schade
 schaduw
+schaduwen
+schalen
 schapenwolk
+schat
 schatkaart
 schatkist
 schatzoeker
@@ -1765,6 +1791,7 @@ tekenpapier
 telefoon
 televisie
 tellen
+tenen
 tennisbal
 tent
 theater
@@ -1886,6 +1913,7 @@ vinger
 vingerafdruk
 vingerhoed
 vingerpop
+vingers
 vingerverf
 vink
 viool
@@ -1927,6 +1955,8 @@ vogelkooi
 vogelnest
 vol
 volleybal
+voor
+voorhoofd
 voorjaar
 voorjaarsbloem
 voorlezen
@@ -2037,6 +2067,7 @@ woordenboek
 worm
 worst
 wortel
+xylofoon
 yoga
 yoghurt
 zaag

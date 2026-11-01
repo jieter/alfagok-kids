@@ -12,6 +12,11 @@ export function dayNumber(date: Date): number {
   return Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000);
 }
 
+// e.g. "1 november", for a day number from dayNumber()
+export function formatDay(day: number): string {
+  return new Date(day * 86400000).toLocaleDateString("nl-NL", { day: "numeric", month: "long", timeZone: "UTC" });
+}
+
 export function answerForDay(words: string[], day: number): string {
   return words[((day % words.length) + words.length) % words.length];
 }

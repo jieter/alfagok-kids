@@ -7,6 +7,7 @@ import {
   commonPrefix,
   dayNumber,
   findWord,
+  formatDay,
   parseWords,
   splitGuesses,
 } from "./game";
@@ -33,6 +34,12 @@ describe("answerForDay", () => {
   it("changes the next day", () => {
     const day = dayNumber(new Date(2026, 10, 1));
     expect(answerForDay(words, day + 1)).not.toBe(answerForDay(words, day));
+  });
+});
+
+describe("formatDay", () => {
+  it("shows the date of a day number", () => {
+    expect(formatDay(dayNumber(new Date(2026, 10, 1)))).toBe("1 november");
   });
 });
 
