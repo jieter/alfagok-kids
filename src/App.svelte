@@ -7,15 +7,17 @@
     alphabetColumns,
     answerForDay,
     candidatesBetween,
-    closestWord,
     collator,
+    commonPrefix,
     dayNumber,
+    findWord,
     parseWords,
     splitGuesses,
   } from "./lib/game";
-  import { loadGuesses, saveGuesses } from "./lib/storage";
+  import { loadGuesses, loadOnlyListWords, saveGuesses, saveOnlyListWords } from "./lib/storage";
 
   const words = parseWords(wordsText);
+  const known = new Set(words);
   const day = dayNumber(new Date());
   const answer = answerForDay(words, day);
 
@@ -25,49 +27,47 @@
       : `${guess} komt later. Het geheime woord staat dus eerder!`;
   }
 
-  const restored = loadGuesses(day).filter(word => words.includes(word));
+  const restored = loadGuesses(day);
   const lastRestored = restored.at(-1);
 
   let guessed: string[] = $state(restored);
   let latest = $state(lastRestored);
   let typed = $state("");
   let message = $state(lastRestored && lastRestored !== answer ? hint(lastRestored) : "");
+  let onlyListWords = $state(loadOnlyListWords());
   let input: HTMLInputElement | undefined = $state();
   let success: HTMLElement | undefined = $state();
 
+  // Words that are not in the list are shown, but do not count as an attempt.
+  const attempts = $derived(guessed.filter(word => known.has(word)).length);
   const won = $derived(guessed.includes(answer));
   const split = $derived(splitGuesses(guessed, answer));
-  const columns = $derived(alphabetColumns(
-    won ? [answer] : candidatesBetween(words, split.before.at(-1), split.after[0])
-  ));
+  const candidates = $derived(won ? [answer] : candidatesBetween(words, split.before.at(-1), split.after[0]));
+  const columns = $derived(alphabetColumns(candidates));
 
   async function submit(event: SubmitEvent) {
     event.preventDefault();
     const text = typed.trim();
-    const guess = closestWord(words, text);
-    if (!guess) {
-      message = `Ik ken geen woorden met de ${text[0].toLocaleLowerCase("nl-NL")}. Probeer een ander woord!`;
+    const listWord = findWord(words, text);
+    if (!listWord && onlyListWords) {
+      message = `${text} staat niet in mijn woordenlijst. Probeer een ander woord!`;
       input?.select();
       return;
     }
-    const substituted = collator.compare(guess, text) !== 0;
+    const guess = listWord ?? text.toLocaleLowerCase("nl-NL");
 
-    if (guessed.includes(guess)) {
-      message = substituted
-        ? `"${text}" ken ik niet. Het lijkt op ${guess}, maar dat woord heb je al geprobeerd. Kies een ander woord!`
-        : "Dat woord heb je al geprobeerd. Kies een ander woord!";
+    if (guessed.some(word => collator.compare(word, guess) === 0)) {
+      message = "Dat woord heb je al geprobeerd. Kies een ander woord!";
       input?.select();
       return;
     }
 
     guessed.push(guess);
     latest = guess;
-    typed = "";
+    // fill in the letters that are already certain
+    typed = commonPrefix(candidates);
     saveGuesses(day, $state.snapshot(guessed));
     message = guess === answer ? "" : hint(guess);
-    if (substituted) {
-      message = `"${text}" ken ik niet, dus ik probeer ${guess}. ${message}`;
-    }
 
     if (guess === answer) {
       await tick();
@@ -78,6 +78,7 @@
   }
 
   onMount(() => {
+    if (!won) typed = commonPrefix(candidates);
     if (won && success) confetti(success);
   });
 </script>
@@ -87,14 +88,14 @@
 <main>
   <header>
     <h1><span class="mascot" aria-hidden="true">🦊</span>Alfagok kids<span class="mascot" aria-hidden="true">🦊</span></h1>
-    <p class="intro">Raad het geheime woord. Staat jouw woord eerder of later in het alfabet?</p>
-    <span class="counter">{guessed.length} {guessed.length === 1 ? "poging" : "pogingen"}</span>
+    <p class="intro" class:played={guessed.length > 0}>Raad het geheime woord. Staat jouw woord eerder of later in het alfabet?</p>
+    <span class="counter">{attempts} {attempts === 1 ? "poging" : "pogingen"}</span>
   </header>
 
   <section class="guesses" aria-label="Woorden die voor het geheime woord komen">
     <ul class="guess-list" aria-live="polite">
       {#each split.before as word (word)}
-        <li class:just-guessed={word === latest}>{word}</li>
+        <li class:just-guessed={word === latest} class:unknown={!known.has(word)}>{word}</li>
       {/each}
     </ul>
     <p class="zone-label">⬆ Eerder in het alfabet</p>
@@ -115,13 +116,25 @@
     <p class="zone-label">⬇ Later in het alfabet</p>
     <ul class="guess-list" aria-live="polite">
       {#each split.after as word (word)}
-        <li class:just-guessed={word === latest}>{word}</li>
+        <li class:just-guessed={word === latest} class:unknown={!known.has(word)}>{word}</li>
       {/each}
     </ul>
   </section>
 
   <p class="message" role="status" aria-live="polite">{message}</p>
-  <p class="help"><strong>Zo speel je:</strong> typ een woord en druk op Gok. Ken ik je woord niet, dan probeer ik een woord dat erop lijkt. Je ziet of het geheime woord eerder of later komt. Blijf raden tot je het vindt!</p>
+  <p class="help">
+    <strong>Zo speel je:</strong> typ een woord en druk op Gok.
+    {#if onlyListWords}
+      Ken ik je woord niet, dan mag je een ander woord proberen.
+    {:else}
+      Ken ik je woord niet, dan wordt het rood, maar dat telt niet als poging.
+    {/if}
+    Je ziet of het geheime woord eerder of later komt. Blijf raden tot je het vindt!
+  </p>
+  <label class="setting">
+    <input type="checkbox" role="switch" bind:checked={onlyListWords} onchange={() => saveOnlyListWords(onlyListWords)}>
+    Alleen woorden uit de woordenlijst
+  </label>
 </main>
 
 <style>
@@ -153,10 +166,22 @@
   }
 
   .intro {
+    max-height: 6em;
     margin: 0 auto 24px;
     max-width: 390px;
+    overflow: hidden;
     font-size: 1.05rem;
     line-height: 1.5;
+    transition: opacity 600ms ease-out, max-height 600ms ease-out 300ms, margin 600ms ease-out 300ms;
+  }
+
+  /* on small screens, make room once the game has started */
+  @media (max-width: 720px) {
+    .intro.played {
+      max-height: 0;
+      margin-bottom: 0;
+      opacity: 0;
+    }
   }
 
   .counter {
@@ -198,6 +223,13 @@
     animation: pop 220ms ease-out;
   }
 
+  /* wavy border: rounded corners and one wave per edge tile, repeated along the sides */
+  .guess-list li.unknown {
+    border-color: #8b1a1a;
+    background: #fdf3f3;
+    color: #8b1a1a;
+  }
+
   @keyframes pop {
     from { transform: scale(.85); }
     to { transform: scale(1); }
@@ -229,7 +261,7 @@
     text-align: center;
   }
 
-  input {
+  input[type="text"] {
     width: 100%;
     min-width: 0;
     padding: 13px 15px;
@@ -240,7 +272,7 @@
     font-size: 1.05rem;
   }
 
-  input:focus-visible,
+  input[type="text"]:focus-visible,
   button:focus-visible {
     outline: 4px solid #ffbf47;
     outline-offset: 3px;
@@ -278,6 +310,59 @@
     background: #f1f5ff;
     font-size: .95rem;
     line-height: 1.5;
+  }
+
+  .setting {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 14px 0 0;
+    color: #53617a;
+    font-size: .9rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* checkbox styled as a toggle switch */
+  .setting input {
+    position: relative;
+    flex: 0 0 auto;
+    width: 40px;
+    height: 24px;
+    margin: 0;
+    border: 2px solid #23324d;
+    border-radius: 999px;
+    background: #dfe6ef;
+    appearance: none;
+    cursor: pointer;
+    transition: background 200ms ease-out;
+  }
+
+  .setting input::before {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgb(35 50 77 / .4);
+    transition: transform 200ms ease-out;
+  }
+
+  .setting input:checked {
+    background: #2b8a4e;
+  }
+
+  .setting input:checked::before {
+    transform: translateX(16px);
+  }
+
+  .setting input:focus-visible {
+    outline: 4px solid #ffbf47;
+    outline-offset: 2px;
   }
 
   @media (max-width: 420px) {

@@ -4,9 +4,9 @@ import {
   alphabetColumns,
   answerForDay,
   candidatesBetween,
-  closestWord,
+  commonPrefix,
   dayNumber,
-  editDistance,
+  findWord,
   parseWords,
   splitGuesses,
 } from "./game";
@@ -36,29 +36,14 @@ describe("answerForDay", () => {
   });
 });
 
-describe("editDistance", () => {
-  it("counts swapped letters as two edits", () => {
-    expect(editDistance("olifnat", "olifant")).toBe(2);
-  });
-});
-
-describe("closestWord", () => {
-  it("returns the word itself, ignoring case and accents", () => {
-    expect(closestWord(words, "Kat")).toBe("kat");
-    expect(closestWord(words, "pinguin")).toBe("pinguïn");
+describe("findWord", () => {
+  it("finds the list word, ignoring case and accents", () => {
+    expect(findWord(words, "Kat")).toBe("kat");
+    expect(findWord(words, "pinguin")).toBe("pinguïn");
   });
 
-  it("fixes typos", () => {
-    expect(closestWord(words, "olifnat")).toBe("olifant");
-  });
-
-  it("uses the next word with the same first letter for unknown words", () => {
-    expect(closestWord(words, "kaars")).toBe("kat");
-    expect(closestWord(words, "zzzzzz")).toBe("zeef");
-  });
-
-  it("keeps the first letter", () => {
-    expect(closestWord(words, "xylofoon")).toBeUndefined();
+  it("does not guess what an unknown word could be", () => {
+    expect(findWord(words, "olifnat")).toBeUndefined();
   });
 });
 
@@ -91,6 +76,18 @@ describe("alphabetColumns", () => {
 
   it("stops at six alphabets", () => {
     expect(alphabetColumns(["dobbelsteen"])).toHaveLength(6);
+  });
+});
+
+describe("commonPrefix", () => {
+  it("returns the letters all candidates start with", () => {
+    expect(commonPrefix(candidatesBetween(words, "koe", "kop"))).toBe("ko");
+    expect(commonPrefix(["zee", "zeef"])).toBe("zee");
+  });
+
+  it("is empty when the first letter is not certain", () => {
+    expect(commonPrefix(words)).toBe("");
+    expect(commonPrefix([])).toBe("");
   });
 });
 

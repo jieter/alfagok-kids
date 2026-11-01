@@ -24,7 +24,7 @@ Als je het woord van de dag geraden hebt staat er in plaats van `[input]` een me
 
 ## Kinderversie
 
-Het spel kiest dagelijks een woord uit `woorden.txt`, een lijst met eenvoudige Nederlandse kinderwoorden (één woord per regel). Typ een woord; staat het niet in de lijst, dan gebruikt het spel een woord met dezelfde beginletter dat het meest lijkt op wat je typte (bij een tikfout) of dat er in het alfabet direct na komt. Je pogingen verschijnen boven of onder het invoerveld om te laten zien waar het geheime woord in het alfabet staat.
+Het spel kiest dagelijks een woord uit `woorden.txt`, een lijst met eenvoudige Nederlandse kinderwoorden (één woord per regel). Typ een woord; staat het niet in de lijst, dan wordt het in donkerrood getoond en telt het niet als poging, maar het staat wel op de juiste plek in het alfabet. Je pogingen verschijnen boven of onder het invoerveld om te laten zien waar het geheime woord in het alfabet staat.
 
 ### Ontwikkelen
 

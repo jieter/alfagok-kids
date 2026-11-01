@@ -55,12 +55,17 @@
       transform: none;
     }
 
+    /* all 26 letters on one line: equal widths, font scaled to the screen width */
     .alphabet {
-      flex-flow: row wrap;
-      justify-content: center;
-      gap: 2px 8px;
-      font-size: 1.1rem;
+      flex-direction: row;
+      gap: 0;
+      font-size: min(1.1rem, 3.6vw);
       transform: none;
+    }
+
+    .alphabet li {
+      flex: 1 1 0;
+      min-width: 0;
     }
   }
 </style>

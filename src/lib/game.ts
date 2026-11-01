@@ -16,42 +16,9 @@ export function answerForDay(words: string[], day: number): string {
   return words[((day % words.length) + words.length) % words.length];
 }
 
-export function editDistance(a: string, b: string): number {
-  let previous = Array.from({ length: b.length + 1 }, (_, i) => i);
-  for (let i = 1; i <= a.length; i++) {
-    const current = [i];
-    for (let j = 1; j <= b.length; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      current[j] = Math.min(previous[j] + 1, current[j - 1] + 1, previous[j - 1] + cost);
-    }
-    previous = current;
-  }
-  return previous[b.length];
-}
-
-// Typos (at most 2 letters off) map to the closest spelling, anything else
-// to the list word that follows it alphabetically. The first letter is kept,
-// so this returns undefined if no list word starts with the typed letter.
-export function closestWord(words: string[], typed: string): string | undefined {
-  const exact = words.find(word => collator.compare(word, typed) === 0);
-  if (exact) return exact;
-
-  const candidates = words.filter(word => collator.compare(word[0], typed[0]) === 0);
-  if (candidates.length === 0) return undefined;
-
-  const lower = typed.toLocaleLowerCase("nl-NL");
-  let best = candidates[0];
-  let bestDistance = Infinity;
-  for (const word of candidates) {
-    const distance = editDistance(lower, word);
-    if (distance < bestDistance) {
-      best = word;
-      bestDistance = distance;
-    }
-  }
-  if (bestDistance <= 2) return best;
-
-  return candidates.find(word => collator.compare(word, typed) > 0) ?? candidates[candidates.length - 1];
+// The list word matching the typed text, ignoring case and accents.
+export function findWord(words: string[], typed: string): string | undefined {
+  return words.find(word => collator.compare(word, typed) === 0);
 }
 
 // The guesses that come before and after the answer, both sorted alphabetically.
@@ -80,6 +47,14 @@ function sameLetterAt(candidates: string[], position: number): boolean {
   return candidates.every(word =>
     word[position] !== undefined && collator.compare(word[position], candidates[0][position]) === 0
   );
+}
+
+// The letters all candidates start with, so these are certain.
+export function commonPrefix(candidates: string[]): string {
+  if (candidates.length === 0) return "";
+  let length = 0;
+  while (sameLetterAt(candidates, length)) length++;
+  return candidates[0].slice(0, length);
 }
 
 // An alphabet for the next letter is added as long as all previous letters are certain,
