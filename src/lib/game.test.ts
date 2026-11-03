@@ -14,6 +14,7 @@ import {
   splitGuesses,
   startsOf,
 } from "./game";
+import { gunzipText } from "./gzip";
 
 const words = ["bal", "kat", "olifant", "pinguïn"];
 
@@ -136,5 +137,16 @@ describe("woordenboek.txt", () => {
   it("contains all secret words (run woorden/create_wordlist.py after adding them)", () => {
     const dictionary = new Set(dictionaryText.split("\n"));
     expect(dayWordsText.split("\n").filter(word => word && !dictionary.has(word))).toEqual([]);
+  });
+});
+
+describe("gunzipText", () => {
+  it("unpacks gzipped text", async () => {
+    const gzipped = new Response(new Blob(["aap\nnoot\n"]).stream().pipeThrough(new CompressionStream("gzip")));
+    expect(await gunzipText(await gzipped.arrayBuffer())).toBe("aap\nnoot\n");
+  });
+
+  it("also reads text the browser already unpacked", async () => {
+    expect(await gunzipText(new TextEncoder().encode("aap\nnoot\n").buffer)).toBe("aap\nnoot\n");
   });
 });

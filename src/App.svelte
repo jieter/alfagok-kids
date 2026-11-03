@@ -1,10 +1,11 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
   import dayWordsText from "../woorden/woord-van-de-dag.txt?raw";
-  // a separate file with a hash in its name, so a changed dictionary is never cached
-  import dictionaryUrl from "../woorden/woordenboek.txt?url";
+  // a separate gzipped file with a hash in its name, so a changed dictionary is never cached
+  import dictionaryUrl from "../woorden/woordenboek.txt?gzip";
   import Alphabets from "./lib/Alphabets.svelte";
   import { confetti } from "./lib/confetti";
+  import { gunzipText } from "./lib/gzip";
   import {
     alphabetColumns,
     answerForDay,
@@ -30,7 +31,8 @@
   // The dictionary decides whether a guess is a real word.
   let dictionary: Dictionary | undefined = $state.raw();
   const dictionaryLoaded = fetch(dictionaryUrl)
-    .then(response => response.text())
+    .then(response => response.arrayBuffer())
+    .then(gunzipText)
     .then(text => { dictionary = makeDictionary(text.split("\n").filter(Boolean)); })
     .catch(() => {});
 

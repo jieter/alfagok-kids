@@ -2,7 +2,7 @@
 #
 # - woord-van-de-dag.txt (kept by hand): the secret word for each day, simple words children
 #   know. The first line is 1 November 2026; add new words at the end, so existing days stay.
-# - woordenboek.txt (generated here): as many Dutch words as possible, used to tell
+# - woordenboek.txt (generated here, gzipped by the Vite build): as many Dutch words as possible, used to tell
 #   whether a guess is a real word. Always includes the secret words.
 #
 # Based on https://codeberg.org/diginaut/alfagok/src/commit/a86d792dabbb382d347e84e4021850e4949865ca/wordlist
@@ -28,10 +28,6 @@ WORD_OF_THE_DAY = HERE / 'woord-van-de-dag.txt'
 
 def read_words(path):
     return [line.strip() for line in path.read_text(encoding='utf-8').splitlines()]
-
-
-def write_words(path, words):
-    path.write_text(''.join(f'{word}\n' for word in words), encoding='utf-8')
 
 
 def is_valid(word):
@@ -72,6 +68,6 @@ if missing:
     print(f'{len(missing)} secret words were not in the sources, added anyway: {" ".join(missing)}')
 dictionary |= set(secret_words)
 
-write_words(DICTIONARY, sorted(dictionary, key=str.casefold))
+DICTIONARY.write_text(''.join(f'{word}\n' for word in sorted(dictionary, key=str.casefold)), encoding='utf-8')
 
 print(f'done writing {len(dictionary)} words to woordenboek.txt')

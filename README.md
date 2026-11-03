@@ -43,7 +43,7 @@ De spellogica staat in `src/lib/game.ts`, de interface in `src/App.svelte`. `woo
 ### Woordenlijsten
 
 - `woorden/woord-van-de-dag.txt`: met de hand bijgehouden kinderwoorden, één per dag; de eerste regel is 1 november 2026. Voeg nieuwe woorden onderaan toe, dan veranderen bestaande dagen niet.
-- `woorden/woordenboek.txt`: zoveel mogelijk Nederlandse woorden (ongeveer 350.000), gemaakt door `woorden/create_wordlist.py` uit de woordenlijsten van [OpenTaal](https://github.com/OpenTaal/opentaal-wordlist) (BSD / CC BY 3.0), plus alle geheime woorden.
+- `woorden/woordenboek.txt`: zoveel mogelijk Nederlandse woorden (ongeveer 350.000; de build pakt het in met gzip en de browser pakt het weer uit), gemaakt door `woorden/create_wordlist.py` uit de woordenlijsten van [OpenTaal](https://github.com/OpenTaal/opentaal-wordlist) (BSD / CC BY 3.0), plus alle geheime woorden.
 
 Na het toevoegen van geheime woorden het woordenboek bijwerken (de bronbestanden worden zo nodig in `woorden/bronnen/` gedownload):
 
