@@ -1,34 +1,41 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
-  import wordsText from "../woorden.txt?raw";
+  import dayWordsText from "../woorden/woord-van-de-dag.txt?raw";
+  // a separate file with a hash in its name, so a changed dictionary is never cached
+  import dictionaryUrl from "../woorden/woordenboek.txt?url";
   import Alphabets from "./lib/Alphabets.svelte";
   import { confetti } from "./lib/confetti";
   import {
     alphabetColumns,
     answerForDay,
-    candidatesBetween,
+    betweenGuesses,
     collator,
-    commonPrefix,
+    certainPrefix,
     dayNumber,
     findWord,
     formatDay,
-    parseWords,
+    makeDictionary,
+    type Dictionary,
     splitGuesses,
+    startsOf,
   } from "./lib/game";
   import {
     clearGuesses,
     loadGuesses,
     loadHistory,
-    loadOnlyListWords,
     saveGuesses,
-    saveOnlyListWords,
     saveSolved,
   } from "./lib/storage";
 
-  const words = parseWords(wordsText);
-  const known = new Set(words);
+  // The dictionary decides whether a guess is a real word.
+  let dictionary: Dictionary | undefined = $state.raw();
+  const dictionaryLoaded = fetch(dictionaryUrl)
+    .then(response => response.text())
+    .then(text => { dictionary = makeDictionary(text.split("\n").filter(Boolean)); })
+    .catch(() => {});
+
   const day = dayNumber(new Date());
-  const answer = answerForDay(words, day);
+  const answer = answerForDay(dayWordsText.split("\n").filter(Boolean), day);
 
   function hint(guess: string): string {
     return collator.compare(guess, answer) < 0
@@ -51,22 +58,23 @@
   let latest = $state(lastRestored);
   let typed = $state("");
   let message = $state(lastRestored && lastRestored !== answer ? hint(lastRestored) : "");
-  let onlyListWords = $state(loadOnlyListWords());
   let solvedWords = $state(loadHistory());
   let input: HTMLInputElement | undefined = $state();
   let success: HTMLElement | undefined = $state();
 
   const won = $derived(guessed.includes(answer));
   const split = $derived(splitGuesses(guessed, answer));
-  const candidates = $derived(won ? [answer] : candidatesBetween(words, split.before.at(-1), split.after[0]));
-  const columns = $derived(alphabetColumns(candidates));
+  const canStart = $derived(won ? startsOf(answer) : betweenGuesses(split.before.at(-1), split.after[0]));
+  const columns = $derived(alphabetColumns(canStart));
 
   async function submit(event: SubmitEvent) {
     event.preventDefault();
     const text = typed.trim();
-    const listWord = findWord(words, text);
-    if (!listWord && onlyListWords) {
-      message = `${text} staat niet in mijn woordenlijst. Probeer een ander woord!`;
+    await dictionaryLoaded;
+    const listWord = dictionary && findWord(dictionary, text);
+    // if the dictionary could not be loaded, any word is accepted
+    if (!listWord && dictionary) {
+      message = `${text} staat niet in mijn woordenboek. Probeer een ander woord!`;
       input?.select();
       return;
     }
@@ -81,7 +89,7 @@
     guessed.push(guess);
     latest = guess;
     // fill in the letters that are already certain
-    typed = commonPrefix(candidates);
+    typed = certainPrefix(canStart);
     saveGuesses(day, $state.snapshot(guessed));
     message = guess === answer ? "" : hint(guess);
 
@@ -95,7 +103,7 @@
   }
 
   onMount(() => {
-    if (!won) typed = commonPrefix(candidates);
+    if (!won) typed = certainPrefix(canStart);
     // also for games won before the history was kept
     if (won && !solvedWords.some(entry => entry.day === day)) {
       solvedWords = saveSolved({ day, word: answer, attempts: guessed.length });
@@ -116,7 +124,7 @@
   <section class="guesses" aria-label="Woorden die voor het geheime woord komen">
     <ul class="guess-list" aria-live="polite">
       {#each split.before as word (word)}
-        <li class:just-guessed={word === latest} class:unknown={!known.has(word)}>{word}</li>
+        <li class:just-guessed={word === latest}>{word}</li>
       {/each}
     </ul>
     <p class="zone-label">⬆ Eerder in het alfabet</p>
@@ -137,7 +145,7 @@
     <p class="zone-label">⬇ Later in het alfabet</p>
     <ul class="guess-list" aria-live="polite">
       {#each split.after as word (word)}
-        <li class:just-guessed={word === latest} class:unknown={!known.has(word)}>{word}</li>
+        <li class:just-guessed={word === latest}>{word}</li>
       {/each}
     </ul>
   </section>
@@ -145,17 +153,9 @@
   <p class="message" role="status" aria-live="polite">{message}</p>
   <p class="help">
     <strong>Zo speel je:</strong> typ een woord en druk op Gok.
-    {#if onlyListWords}
-      Ken ik je woord niet, dan mag je een ander woord proberen.
-    {:else}
-      Ken ik je woord niet, dan wordt het rood.
-    {/if}
+    Ken ik je woord niet, dan mag je een ander woord proberen.
     Je ziet of het geheime woord eerder of later komt. Blijf raden tot je het vindt!
   </p>
-  <label class="setting">
-    <input type="checkbox" role="switch" bind:checked={onlyListWords} onchange={() => saveOnlyListWords(onlyListWords)}>
-    Alleen woorden uit de woordenlijst
-  </label>
 
   {#if solvedWords.length > 0}
     <section class="history">
@@ -260,12 +260,6 @@
   }
 
   /* wavy border: rounded corners and one wave per edge tile, repeated along the sides */
-  .guess-list li.unknown {
-    border-color: #8b1a1a;
-    background: #fdf3f3;
-    color: #8b1a1a;
-  }
-
   @keyframes pop {
     from { transform: scale(.85); }
     to { transform: scale(1); }
@@ -346,59 +340,6 @@
     background: #f1f5ff;
     font-size: .95rem;
     line-height: 1.5;
-  }
-
-  .setting {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin: 14px 0 0;
-    color: #53617a;
-    font-size: .9rem;
-    font-weight: 700;
-    cursor: pointer;
-  }
-
-  /* checkbox styled as a toggle switch */
-  .setting input {
-    position: relative;
-    flex: 0 0 auto;
-    width: 40px;
-    height: 24px;
-    margin: 0;
-    border: 2px solid #23324d;
-    border-radius: 999px;
-    background: #dfe6ef;
-    appearance: none;
-    cursor: pointer;
-    transition: background 200ms ease-out;
-  }
-
-  .setting input::before {
-    content: "";
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 1px 2px rgb(35 50 77 / .4);
-    transition: transform 200ms ease-out;
-  }
-
-  .setting input:checked {
-    background: #2b8a4e;
-  }
-
-  .setting input:checked::before {
-    transform: translateX(16px);
-  }
-
-  .setting input:focus-visible {
-    outline: 4px solid #ffbf47;
-    outline-offset: 2px;
   }
 
   .history {

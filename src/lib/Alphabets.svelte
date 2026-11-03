@@ -2,11 +2,25 @@
   import type { AlphabetColumn } from "./game";
 
   let { columns }: { columns: AlphabetColumn[] } = $props();
+
+  function isCertain(column: AlphabetColumn): boolean {
+    return column.letters.filter(({ possible }) => possible).length === 1;
+  }
+
+  // on narrow screens the certain letters are shown together on one line
+  const known = $derived(
+    columns.filter(isCertain).map(column => column.letters.find(({ possible }) => possible)!.letter).join("")
+  );
 </script>
 
 <div class="alphabets" aria-hidden="true">
+  {#if known}
+    <p class="known">{known}</p>
+  {/if}
   {#each columns as column, index (index)}
-    <ol class="alphabet" style:--shift={column.shift}>
+    <!-- a certain letter is shown on its own, the grey letters keep their place but are hidden -->
+    <ol class="alphabet" class:certain={isCertain(column)}
+      style:--shift={column.shift}>
       {#each column.letters as { letter, possible } (letter)}
         <li class:impossible={!possible}>{letter}</li>
       {/each}
@@ -20,8 +34,16 @@
     top: 50%;
     left: 24px;
     display: flex;
-    gap: 10px;
     transform: translateY(-50%);
+  }
+
+  .alphabet + .alphabet {
+    margin-left: 10px;
+  }
+
+  /* certain letters close together, so they read as the start of a word */
+  .certain + .certain {
+    margin-left: 1px;
   }
 
   .alphabet {
@@ -43,6 +65,18 @@
 
   .impossible {
     color: #c3cad6;
+    transition: opacity 300ms ease-out;
+  }
+
+  /* hidden, and without width so the column is as narrow as its letter */
+  .certain .impossible {
+    width: 0;
+    overflow: hidden;
+    opacity: 0;
+  }
+
+  .known {
+    display: none;
   }
 
   @media (max-width: 720px) {
@@ -66,6 +100,25 @@
     .alphabet li {
       flex: 1 1 0;
       min-width: 0;
+    }
+
+    .alphabet + .alphabet,
+    .certain + .certain {
+      margin-left: 0;
+    }
+
+    .certain {
+      display: none;
+    }
+
+    .known {
+      display: block;
+      margin: 0;
+      color: #23324d;
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: .05em;
+      text-align: center;
     }
   }
 </style>

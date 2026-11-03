@@ -22,22 +22,6 @@ export function loadGuesses(day: number): string[] {
   }
 }
 
-const onlyListWordsKey = "alfagok-kinderen-alleen-lijst";
-
-export function saveOnlyListWords(value: boolean): void {
-  try {
-    localStorage.setItem(onlyListWordsKey, JSON.stringify(value));
-  } catch {}
-}
-
-export function loadOnlyListWords(): boolean {
-  try {
-    return JSON.parse(localStorage.getItem(onlyListWordsKey) ?? "false") === true;
-  } catch {
-    return false;
-  }
-}
-
 const historyKey = "alfagok-kinderen-geschiedenis";
 
 export interface Solved {

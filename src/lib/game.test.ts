@@ -1,39 +1,36 @@
 import { describe, expect, it } from "vitest";
-import wordsText from "../../woorden.txt?raw";
+import dictionaryText from "../../woorden/woordenboek.txt?raw";
+import dayWordsText from "../../woorden/woord-van-de-dag.txt?raw";
 import {
   alphabetColumns,
   answerForDay,
-  candidatesBetween,
-  commonPrefix,
+  betweenGuesses,
+  certainPrefix,
   dayNumber,
   findWord,
+  firstDay,
   formatDay,
-  parseWords,
+  makeDictionary,
   splitGuesses,
+  startsOf,
 } from "./game";
 
-const words = parseWords("olifant\nkat\nkop\nkoe\nkoekje\nkonijn\nkwal\nzee\nzeef\n\npinguïn\nbal\nbad\n");
+const words = ["bal", "kat", "olifant", "pinguïn"];
 
 function possibleLetters(column: { letters: { letter: string; possible: boolean }[] }): string {
   return column.letters.filter(({ possible }) => possible).map(({ letter }) => letter).join("");
 }
 
-describe("parseWords", () => {
-  it("sorts, trims and skips empty lines and duplicates", () => {
-    expect(parseWords(" zon\n\naap\nzon\n")).toEqual(["aap", "zon"]);
-  });
-});
-
 describe("answerForDay", () => {
-  it("is the same for the whole day", () => {
-    const morning = dayNumber(new Date(2026, 10, 1, 7, 0));
-    const evening = dayNumber(new Date(2026, 10, 1, 23, 0));
-    expect(answerForDay(words, morning)).toBe(answerForDay(words, evening));
+  const dayWords = ["aap", "noot", "mies"];
+
+  it("starts at the first line on 1 November 2026", () => {
+    expect(answerForDay(dayWords, firstDay)).toBe("aap");
+    expect(answerForDay(dayWords, dayNumber(new Date(2026, 10, 2, 23, 0)))).toBe("noot");
   });
 
-  it("changes the next day", () => {
-    const day = dayNumber(new Date(2026, 10, 1));
-    expect(answerForDay(words, day + 1)).not.toBe(answerForDay(words, day));
+  it("starts again after the last day", () => {
+    expect(answerForDay(dayWords, firstDay + 3)).toBe("aap");
   });
 });
 
@@ -45,12 +42,13 @@ describe("formatDay", () => {
 
 describe("findWord", () => {
   it("finds the list word, ignoring case and accents", () => {
-    expect(findWord(words, "Kat")).toBe("kat");
-    expect(findWord(words, "pinguin")).toBe("pinguïn");
+    expect(findWord(makeDictionary(words), "Kat")).toBe("kat");
+    expect(findWord(makeDictionary(words), "pinguin")).toBe("pinguïn");
+    expect(findWord(makeDictionary(words), "pinguïn")).toBe("pinguïn");
   });
 
   it("does not guess what an unknown word could be", () => {
-    expect(findWord(words, "olifnat")).toBeUndefined();
+    expect(findWord(makeDictionary(words), "olifnat")).toBeUndefined();
   });
 });
 
@@ -63,54 +61,80 @@ describe("splitGuesses", () => {
   });
 });
 
+describe("betweenGuesses", () => {
+  const canStart = betweenGuesses("kat", "kop");
+
+  it("allows any prefix of a word between the guesses, even if it is not a real word", () => {
+    expect(canStart("k")).toBe(true);
+    expect(canStart("kaz")).toBe(true);
+    expect(canStart("koe")).toBe(true);
+    expect(canStart("kat")).toBe(true); // kater comes after kat
+  });
+
+  it("rejects prefixes of words outside the guesses", () => {
+    expect(canStart("j")).toBe(false);
+    expect(canStart("kaa")).toBe(false);
+    expect(canStart("kop")).toBe(false); // kop itself and everything after it
+    expect(canStart("l")).toBe(false);
+  });
+
+  it("allows everything without guesses", () => {
+    expect(betweenGuesses()("xyz")).toBe(true);
+  });
+});
+
 describe("alphabetColumns", () => {
   it("shows one unshifted alphabet while the first letter is unknown", () => {
-    const columns = alphabetColumns(words);
+    const columns = alphabetColumns(betweenGuesses("bal", "kat"));
     expect(columns).toHaveLength(1);
     expect(columns[0].shift).toBe(0);
-    expect(possibleLetters(columns[0])).toBe("bkopz");
+    expect(possibleLetters(columns[0])).toBe("bcdefghijk");
   });
 
   it("adds an alphabet for every certain letter and lines them up", () => {
-    const columns = alphabetColumns(candidatesBetween(words, "koe", "kop"));
-    expect(columns.map(possibleLetters)).toEqual(["k", "o", "en"]);
+    const columns = alphabetColumns(betweenGuesses("koe", "kop"));
+    expect(columns.map(possibleLetters)).toEqual(["k", "o", "efghijklmno"]);
     expect(columns[0].shift - columns[1].shift).toBe("o".charCodeAt(0) - "k".charCodeAt(0));
   });
 
-  it("stops adding alphabets after the letter where a candidate word can end", () => {
-    expect(alphabetColumns(["zee", "zeef"]).map(possibleLetters)).toEqual(["z", "e", "e", "f"]);
-  });
-
-  it("does not add an alphabet after the last letter of the word", () => {
-    expect(alphabetColumns(["angst"]).map(possibleLetters)).toEqual(["a", "n", "g", "s", "t"]);
-    expect(alphabetColumns(["kat"])).toHaveLength(3);
+  it("only shows the letters of the word once it is guessed", () => {
+    expect(alphabetColumns(startsOf("kat")).map(possibleLetters)).toEqual(["k", "a", "t"]);
+    expect(alphabetColumns(startsOf("angst")).map(possibleLetters)).toEqual(["a", "n", "g", "s", "t"]);
   });
 
   it("stops at six alphabets", () => {
-    expect(alphabetColumns(["dobbelsteen"])).toHaveLength(6);
+    expect(alphabetColumns(startsOf("dobbelsteen"))).toHaveLength(6);
   });
 });
 
-describe("commonPrefix", () => {
-  it("returns the letters all candidates start with", () => {
-    expect(commonPrefix(candidatesBetween(words, "koe", "kop"))).toBe("ko");
-    expect(commonPrefix(["zee", "zeef"])).toBe("zee");
+describe("certainPrefix", () => {
+  it("returns the letters that are certain", () => {
+    expect(certainPrefix(betweenGuesses("koe", "kop"))).toBe("ko");
+    expect(certainPrefix(betweenGuesses("kat", "kau"))).toBe("kat");
+    expect(certainPrefix(startsOf("pinguïn"))).toBe("pinguin");
   });
 
   it("is empty when the first letter is not certain", () => {
-    expect(commonPrefix(words)).toBe("");
-    expect(commonPrefix([])).toBe("");
+    expect(certainPrefix(betweenGuesses("bal", "kat"))).toBe("");
+    expect(certainPrefix(betweenGuesses())).toBe("");
   });
 });
 
-describe("woorden.txt", () => {
-  const list = wordsText.split("\n").filter(Boolean);
+describe("woord-van-de-dag.txt", () => {
+  const dayWords = dayWordsText.split("\n").filter(Boolean);
 
-  it("has no duplicates", () => {
-    expect(new Set(list).size).toBe(list.length);
+  it("has every word only once", () => {
+    expect(dayWords.filter((word, index) => dayWords.indexOf(word) !== index)).toEqual([]);
   });
 
   it("only has lowercase words without spaces", () => {
-    expect(list.filter(word => !/^[a-zà-ÿ]+$/.test(word))).toEqual([]);
+    expect(dayWords.filter(word => !/^[a-zà-ÿ]+$/.test(word))).toEqual([]);
+  });
+});
+
+describe("woordenboek.txt", () => {
+  it("contains all secret words (run woorden/create_wordlist.py after adding them)", () => {
+    const dictionary = new Set(dictionaryText.split("\n"));
+    expect(dayWordsText.split("\n").filter(word => word && !dictionary.has(word))).toEqual([]);
   });
 });

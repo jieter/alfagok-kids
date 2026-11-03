@@ -2,12 +2,6 @@ export const collator = new Intl.Collator("nl-NL", { sensitivity: "base" });
 
 export const alphabet = "abcdefghijklmnopqrstuvwxyz";
 
-// One word per line; empty lines are ignored.
-export function parseWords(text: string): string[] {
-  const words = [...new Set(text.split("\n").map(word => word.trim()).filter(Boolean))];
-  return words.sort(collator.compare);
-}
-
 export function dayNumber(date: Date): number {
   return Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000);
 }
@@ -17,13 +11,40 @@ export function formatDay(day: number): string {
   return new Date(day * 86400000).toLocaleDateString("nl-NL", { day: "numeric", month: "long", timeZone: "UTC" });
 }
 
-export function answerForDay(words: string[], day: number): string {
-  return words[((day % words.length) + words.length) % words.length];
+// The first line of woord-van-de-dag.txt is the word for 1 November 2026.
+export const firstDay = dayNumber(new Date(2026, 10, 1));
+
+// After the last day the list starts again from the top.
+export function answerForDay(dayWords: string[], day: number): string {
+  const index = day - firstDay;
+  return dayWords[((index % dayWords.length) + dayWords.length) % dayWords.length];
 }
 
-// The list word matching the typed text, ignoring case and accents.
-export function findWord(words: string[], typed: string): string | undefined {
-  return words.find(word => collator.compare(word, typed) === 0);
+function withoutAccents(word: string): string {
+  return word.normalize("NFD").replace(/\p{M}/gu, "");
+}
+
+// Fast lookup in a big word list; words with accents can also be found without them.
+export interface Dictionary {
+  words: Set<string>;
+  withoutAccents: Map<string, string>;
+}
+
+export function makeDictionary(words: Iterable<string>): Dictionary {
+  const dictionary: Dictionary = { words: new Set(), withoutAccents: new Map() };
+  for (const word of words) {
+    dictionary.words.add(word);
+    // only a few words have accents, so this check keeps building the dictionary quick
+    if (/[^a-z]/.test(word)) dictionary.withoutAccents.set(withoutAccents(word), word);
+  }
+  return dictionary;
+}
+
+// The dictionary word matching the typed text, ignoring case and accents.
+export function findWord(dictionary: Dictionary, typed: string): string | undefined {
+  const lower = typed.trim().toLocaleLowerCase("nl-NL");
+  if (dictionary.words.has(lower)) return lower;
+  return dictionary.withoutAccents.get(withoutAccents(lower));
 }
 
 // The guesses that come before and after the answer, both sorted alphabetically.
@@ -35,11 +56,41 @@ export function splitGuesses(guesses: string[], answer: string): { before: strin
   };
 }
 
-// The list words that can still be the answer: strictly between the closest guesses.
-export function candidatesBetween(words: string[], lowest?: string, highest?: string): string[] {
-  return words.filter(word =>
-    (!lowest || collator.compare(word, lowest) > 0) && (!highest || collator.compare(word, highest) < 0)
-  );
+// Tells whether some word starting with this prefix could still be the answer.
+export type CanStart = (prefix: string) => boolean;
+
+// Words strictly between the closest guesses, whether or not they are in a word list.
+export function betweenGuesses(lowest?: string, highest?: string): CanStart {
+  return prefix => {
+    const length = prefix.length;
+    // all words with this prefix come before the lowest guess
+    if (lowest && collator.compare(lowest.slice(0, length), prefix) > 0) return false;
+    if (highest) {
+      const order = collator.compare(highest.slice(0, length), prefix);
+      // all words with this prefix come after the highest guess (or are it)
+      if (order < 0 || (order === 0 && highest.length <= length)) return false;
+    }
+    return true;
+  };
+}
+
+// Only the given word, once it has been guessed.
+export function startsOf(word: string): CanStart {
+  return prefix => collator.compare(word.slice(0, prefix.length), prefix) === 0;
+}
+
+function possibleLetters(canStart: CanStart, prefix: string): string[] {
+  return [...alphabet].filter(letter => canStart(prefix + letter));
+}
+
+// The letters that are certain: each time only one letter is possible.
+export function certainPrefix(canStart: CanStart): string {
+  let prefix = "";
+  for (;;) {
+    const letters = possibleLetters(canStart, prefix);
+    if (letters.length !== 1) return prefix;
+    prefix += letters[0];
+  }
 }
 
 export interface AlphabetColumn {
@@ -48,45 +99,29 @@ export interface AlphabetColumn {
   shift: number;
 }
 
-function sameLetterAt(candidates: string[], position: number): boolean {
-  return candidates.every(word =>
-    word[position] !== undefined && collator.compare(word[position], candidates[0][position]) === 0
-  );
-}
-
-// The letters all candidates start with, so these are certain.
-export function commonPrefix(candidates: string[]): string {
-  if (candidates.length === 0) return "";
-  let length = 0;
-  while (sameLetterAt(candidates, length)) length++;
-  return candidates[0].slice(0, length);
-}
-
 // An alphabet for the next letter is added as long as all previous letters are certain,
 // up to maxColumns letters. The columns are shifted so the certain letters form a row in
 // the middle, with the possible letters of the last column centered on it.
-export function alphabetColumns(candidates: string[], maxColumns = 6): AlphabetColumn[] {
+export function alphabetColumns(canStart: CanStart, maxColumns = 6): AlphabetColumn[] {
   const columns: AlphabetColumn[] = [];
-  let position = 0;
-  while (true) {
+  let prefix = "";
+  while (columns.length < maxColumns) {
+    const possible = possibleLetters(canStart, prefix);
+    // no alphabet after the last letter of a guessed word
+    if (possible.length === 0) break;
     columns.push({
-      letters: [...alphabet].map(letter => ({
-        letter,
-        possible: candidates.some(word => collator.compare(word[position] ?? "", letter) === 0),
-      })),
+      letters: [...alphabet].map(letter => ({ letter, possible: possible.includes(letter) })),
       shift: 0,
     });
-    if (position >= maxColumns - 1 || !sameLetterAt(candidates, position)) break;
-    // no alphabet for a letter that none of the words have
-    if (candidates.every(word => word.length <= position + 1)) break;
-    position++;
+    if (possible.length !== 1) break;
+    prefix += possible[0];
   }
 
   if (columns.length > 1) {
     const middle = 12.5;
     for (const column of columns) {
       const possible = column.letters.flatMap(({ possible }, index) => (possible ? [index] : []));
-      const focus = possible.length ? Math.round(possible.reduce((a, b) => a + b) / possible.length) : middle;
+      const focus = Math.round(possible.reduce((a, b) => a + b) / possible.length);
       column.shift = middle - focus;
     }
   }
