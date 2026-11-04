@@ -83,16 +83,6 @@ function possibleLetters(canStart: CanStart, prefix: string): string[] {
   return [...alphabet].filter(letter => canStart(prefix + letter));
 }
 
-// The letters that are certain: each time only one letter is possible.
-export function certainPrefix(canStart: CanStart): string {
-  let prefix = "";
-  for (;;) {
-    const letters = possibleLetters(canStart, prefix);
-    if (letters.length !== 1) return prefix;
-    prefix += letters[0];
-  }
-}
-
 export interface AlphabetColumn {
   letters: { letter: string; possible: boolean }[];
   // number of rows to move the column down

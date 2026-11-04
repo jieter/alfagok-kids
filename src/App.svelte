@@ -11,7 +11,6 @@
     answerForDay,
     betweenGuesses,
     collator,
-    certainPrefix,
     dayNumber,
     findWord,
     formatDay,
@@ -86,8 +85,7 @@
 
     guessed.push(guess);
     latest = guess;
-    // fill in the letters that are already certain
-    typed = certainPrefix(canStart);
+    typed = "";
     saveGuesses(day, $state.snapshot(guessed));
     message = guess === answer ? "" : hint(guess);
 
@@ -101,7 +99,6 @@
   }
 
   onMount(() => {
-    if (!won) typed = certainPrefix(canStart);
     // also for games won before the history was kept
     if (won && !solvedWords.some(entry => entry.day === day)) {
       solvedWords = saveSolved({ day, word: answer, attempts: guessed.length });

@@ -5,7 +5,6 @@ import {
   alphabetColumns,
   answerForDay,
   betweenGuesses,
-  certainPrefix,
   dayNumber,
   findWord,
   firstDay,
@@ -110,20 +109,6 @@ describe("alphabetColumns", () => {
     expect(alphabetColumns(startsOf("dobbelsteen"))).toHaveLength(6);
   });
 });
-
-describe("certainPrefix", () => {
-  it("returns the letters that are certain", () => {
-    expect(certainPrefix(betweenGuesses("koe", "kop"))).toBe("ko");
-    expect(certainPrefix(betweenGuesses("kat", "kau"))).toBe("kat");
-    expect(certainPrefix(startsOf("pinguïn"))).toBe("pinguin");
-  });
-
-  it("is empty when the first letter is not certain", () => {
-    expect(certainPrefix(betweenGuesses("bal", "kat"))).toBe("");
-    expect(certainPrefix(betweenGuesses())).toBe("");
-  });
-});
-
 describe("woord-van-de-dag.txt", () => {
   const dayWords = dayWordsText.split("\n").filter(Boolean);
 
