@@ -20,20 +20,16 @@
     splitGuesses,
     startsOf,
   } from "./lib/game";
-  import {
-    clearGuesses,
-    loadGuesses,
-    loadHistory,
-    saveGuesses,
-    saveSolved,
-  } from "./lib/storage";
+  import { clearGuesses, loadGuesses, loadHistory, saveGuesses, saveSolved } from "./lib/storage";
 
   // The dictionary decides whether a guess is a real word.
   let dictionary: Dictionary | undefined = $state.raw();
   const dictionaryLoaded = fetch(dictionaryUrl)
     .then(response => response.arrayBuffer())
     .then(gunzipText)
-    .then(text => { dictionary = makeDictionary(text.split("\n").filter(Boolean)); })
+    .then(text => {
+      dictionary = makeDictionary(text.split("\n").filter(Boolean));
+    })
     .catch(() => {});
 
   const day = dayNumber(new Date());
@@ -118,8 +114,12 @@
 
 <main>
   <header>
-    <h1><span class="mascot" aria-hidden="true">🦊</span>Alfagok kids<span class="mascot" aria-hidden="true">🦊</span></h1>
-    <p class="intro" class:played={guessed.length > 0}>Raad het geheime woord. Staat jouw woord eerder of later in het alfabet?</p>
+    <h1>
+      <span class="mascot" aria-hidden="true">🦊</span>Alfagok kids<span class="mascot" aria-hidden="true">🦊</span>
+    </h1>
+    <p class="intro" class:played={guessed.length > 0}>
+      Raad het geheime woord. Staat jouw woord eerder of later in het alfabet?
+    </p>
     <span class="counter">{guessed.length} {guessed.length === 1 ? "poging" : "pogingen"}</span>
   </header>
 
@@ -137,8 +137,15 @@
   {:else}
     <form onsubmit={submit}>
       <label for="guess-input" class="visually-hidden">Jouw woord</label>
-      <input id="guess-input" name="guess" type="text" bind:this={input} bind:value={typed}
-        placeholder="Typ een woord..." autocomplete="off" required>
+      <input
+        id="guess-input"
+        name="guess"
+        type="text"
+        bind:this={input}
+        bind:value={typed}
+        placeholder="Typ een woord..."
+        autocomplete="off"
+        required />
       <button type="submit">Gok!</button>
     </form>
   {/if}
@@ -154,8 +161,7 @@
 
   <p class="message" role="status" aria-live="polite">{message}</p>
   <p class="help">
-    <strong>Zo speel je:</strong> typ een woord en druk op Gok.
-    Ken ik je woord niet, dan mag je een ander woord proberen.
+    <strong>Zo speel je:</strong> typ een woord en druk op Gok. Ken ik je woord niet, dan mag je een ander woord proberen.
     Je ziet of het geheime woord eerder of later komt. Blijf raden tot je het vindt!
   </p>
 
@@ -193,7 +199,7 @@
   }
 
   .mascot {
-    margin-right: .2em;
+    margin-right: 0.2em;
   }
 
   h1 {
@@ -210,7 +216,10 @@
     overflow: hidden;
     font-size: 1.05rem;
     line-height: 1.5;
-    transition: opacity 600ms ease-out, max-height 600ms ease-out 300ms, margin 600ms ease-out 300ms;
+    transition:
+      opacity 600ms ease-out,
+      max-height 600ms ease-out 300ms,
+      margin 600ms ease-out 300ms;
   }
 
   /* on small screens, make room once the game has started */
@@ -263,14 +272,18 @@
 
   /* wavy border: rounded corners and one wave per edge tile, repeated along the sides */
   @keyframes pop {
-    from { transform: scale(.85); }
-    to { transform: scale(1); }
+    from {
+      transform: scale(0.85);
+    }
+    to {
+      transform: scale(1);
+    }
   }
 
   .zone-label {
     margin: 0;
     color: #53617a;
-    font-size: .88rem;
+    font-size: 0.88rem;
     font-weight: 700;
     text-align: center;
   }
@@ -340,7 +353,7 @@
     padding: 14px 16px;
     border-radius: 16px;
     background: #f1f5ff;
-    font-size: .95rem;
+    font-size: 0.95rem;
     line-height: 1.5;
   }
 
@@ -348,13 +361,13 @@
     margin: 20px 0 0;
     padding-top: 14px;
     border-top: 2px dashed #dfe6ef;
-    font-size: .95rem;
+    font-size: 0.95rem;
   }
 
   .history h2 {
     margin: 0 0 8px;
     color: #53617a;
-    font-size: .95rem;
+    font-size: 0.95rem;
     text-align: center;
   }
 

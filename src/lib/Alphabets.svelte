@@ -9,7 +9,10 @@
 
   // on narrow screens the certain letters are shown together on one line
   const known = $derived(
-    columns.filter(isCertain).map(column => column.letters.find(({ possible }) => possible)!.letter).join("")
+    columns
+      .filter(isCertain)
+      .map(column => column.letters.find(({ possible }) => possible)!.letter)
+      .join(""),
   );
 </script>
 
@@ -19,8 +22,7 @@
   {/if}
   {#each columns as column, index (index)}
     <!-- a certain letter is shown on its own, the grey letters keep their place but are hidden -->
-    <ol class="alphabet" class:certain={isCertain(column)}
-      style:--shift={column.shift}>
+    <ol class="alphabet" class:certain={isCertain(column)} style:--shift={column.shift}>
       {#each column.letters as { letter, possible } (letter)}
         <li class:impossible={!possible}>{letter}</li>
       {/each}
@@ -49,11 +51,11 @@
   .alphabet {
     display: flex;
     flex-direction: column;
-    gap: .1em;
+    gap: 0.1em;
     margin: 0;
     padding: 0;
     color: #23324d;
-    font-size: clamp(.8rem, 3vh, 1.4rem);
+    font-size: clamp(0.8rem, 3vh, 1.4rem);
     font-weight: 800;
     line-height: 1.1;
     list-style: none;
@@ -117,7 +119,7 @@
       color: #23324d;
       font-size: 1.3rem;
       font-weight: 800;
-      letter-spacing: .05em;
+      letter-spacing: 0.05em;
       text-align: center;
     }
   }

@@ -18,8 +18,7 @@ body {
   background:
     radial-gradient(circle at 8% 12%, #ffdf79 0 7px, transparent 8px),
     radial-gradient(circle at 92% 18%, #ff9a8b 0 8px, transparent 9px),
-    radial-gradient(circle at 12% 86%, #a8d8a2 0 9px, transparent 10px),
-    #fff8e8;
+    radial-gradient(circle at 12% 86%, #a8d8a2 0 9px, transparent 10px), #fff8e8;
 }
 
 /* pieces are appended to <body> by confetti.js */
@@ -45,10 +44,12 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: .01ms !important;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
-    transition-duration: .01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }

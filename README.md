@@ -50,4 +50,3 @@ Na het toevoegen van geheime woorden het woordenboek bijwerken (de bronbestanden
 ```sh
 python3 woorden/create_wordlist.py
 ```
-

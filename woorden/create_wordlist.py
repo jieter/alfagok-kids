@@ -11,23 +11,23 @@ import urllib.request
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-SOURCES = HERE / 'bronnen'
-OPENTAAL_URL = 'https://raw.githubusercontent.com/OpenTaal/opentaal-wordlist/master/elements/'
+SOURCES = HERE / "bronnen"
+OPENTAAL_URL = "https://raw.githubusercontent.com/OpenTaal/opentaal-wordlist/master/elements/"
 OPENTAAL_FILES = [
-    'basiswoorden-gekeurd.txt',
-    'basiswoorden-ongekeurd.txt',
+    "basiswoorden-gekeurd.txt",
+    "basiswoorden-ongekeurd.txt",
     # Vervoegingen and such, see https://nl.wikipedia.org/wiki/Flexie_(taalkunde)
-    'flexies-ongekeurd.txt',
+    "flexies-ongekeurd.txt",
 ]
 # Used when present, like in the original script
-OPTIONAL_FILES = ['wikiwoordenboek_basiswoorden.lst', 'scrabblewoorden.txt']
+OPTIONAL_FILES = ["wikiwoordenboek_basiswoorden.lst", "scrabblewoorden.txt"]
 
-DICTIONARY = HERE / 'woordenboek.txt'
-WORD_OF_THE_DAY = HERE / 'woord-van-de-dag.txt'
+DICTIONARY = HERE / "woordenboek.txt"
+WORD_OF_THE_DAY = HERE / "woord-van-de-dag.txt"
 
 
 def read_words(path):
-    return [line.strip() for line in path.read_text(encoding='utf-8').splitlines()]
+    return [line.strip() for line in path.read_text(encoding="utf-8").splitlines()]
 
 
 def is_valid(word):
@@ -40,34 +40,34 @@ all_words = []
 for name in OPENTAAL_FILES:
     path = SOURCES / name
     if not path.is_file():
-        print(f'downloading {name}')
+        print(f"downloading {name}")
         urllib.request.urlretrieve(OPENTAAL_URL + name, path)
     words = read_words(path)
-    print(f'{name} contains {len(words)} words')
+    print(f"{name} contains {len(words)} words")
     all_words += words
 
 for name in OPTIONAL_FILES:
     path = SOURCES / name
     if path.is_file():
         words = read_words(path)
-        print(f'{name} contains {len(words)} words')
+        print(f"{name} contains {len(words)} words")
         all_words += words
     else:
-        print(f'{name} not found, skipped')
+        print(f"{name} not found, skipped")
 
 secret_words = [word for word in read_words(WORD_OF_THE_DAY) if word]
-print(f'woord-van-de-dag.txt contains {len(secret_words)} words')
+print(f"woord-van-de-dag.txt contains {len(secret_words)} words")
 # Not removed automatically, as that would move all later days
 duplicates = sorted({word for word in secret_words if secret_words.count(word) > 1})
 if duplicates:
-    print(f'warning: these words are in woord-van-de-dag.txt more than once: {" ".join(duplicates)}')
+    print(f"warning: these words are in woord-van-de-dag.txt more than once: {' '.join(duplicates)}")
 
 dictionary = {word for word in all_words if is_valid(word)}
 missing = sorted(set(secret_words) - dictionary)
 if missing:
-    print(f'{len(missing)} secret words were not in the sources, added anyway: {" ".join(missing)}')
+    print(f"{len(missing)} secret words were not in the sources, added anyway: {' '.join(missing)}")
 dictionary |= set(secret_words)
 
-DICTIONARY.write_text(''.join(f'{word}\n' for word in sorted(dictionary, key=str.casefold)), encoding='utf-8')
+DICTIONARY.write_text("".join(f"{word}\n" for word in sorted(dictionary, key=str.casefold)), encoding="utf-8")
 
-print(f'done writing {len(dictionary)} words to woordenboek.txt')
+print(f"done writing {len(dictionary)} words to woordenboek.txt")

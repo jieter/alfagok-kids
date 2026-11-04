@@ -42,8 +42,7 @@ export function loadHistory(): Solved[] {
 
 // Stores the solved word for a day, replacing an earlier entry for that day.
 export function saveSolved(solved: Solved): Solved[] {
-  const history = [solved, ...loadHistory().filter(entry => entry.day !== solved.day)]
-    .sort((a, b) => b.day - a.day);
+  const history = [solved, ...loadHistory().filter(entry => entry.day !== solved.day)].sort((a, b) => b.day - a.day);
   try {
     localStorage.setItem(historyKey, JSON.stringify(history));
   } catch {}

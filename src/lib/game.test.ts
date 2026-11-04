@@ -19,7 +19,10 @@ import { gunzipText } from "./gzip";
 const words = ["bal", "kat", "olifant", "pinguïn"];
 
 function possibleLetters(column: { letters: { letter: string; possible: boolean }[] }): string {
-  return column.letters.filter(({ possible }) => possible).map(({ letter }) => letter).join("");
+  return column.letters
+    .filter(({ possible }) => possible)
+    .map(({ letter }) => letter)
+    .join("");
 }
 
 describe("answerForDay", () => {
