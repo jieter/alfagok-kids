@@ -107,8 +107,6 @@
   });
 </script>
 
-<Alphabets {columns} />
-
 <main>
   <header>
     <h1>
@@ -119,6 +117,9 @@
     </p>
     <span class="counter">{guessed.length} {guessed.length === 1 ? "poging" : "pogingen"}</span>
   </header>
+
+  <!-- fixed at the side of the screen; on narrow screens directly above the guesses -->
+  <Alphabets {columns} />
 
   <section class="guesses" aria-label="Woorden die voor het geheime woord komen">
     <ul class="guess-list" aria-live="polite">
