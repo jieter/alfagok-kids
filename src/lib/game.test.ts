@@ -6,6 +6,8 @@ import {
   answerForDay,
   betweenGuesses,
   dayNumber,
+  decodeWord,
+  encodeWord,
   findWord,
   firstDay,
   formatDay,
@@ -136,5 +138,21 @@ describe("gunzipText", () => {
 
   it("also reads text the browser already unpacked", async () => {
     expect(await gunzipText(new TextEncoder().encode("aap\nnoot\n").buffer)).toBe("aap\nnoot\n");
+  });
+});
+
+describe("encodeWord", () => {
+  it("can be decoded again", () => {
+    for (const word of ["bril", "pinguïn", "dalmatiër"]) expect(decodeWord(encodeWord(word))).toBe(word);
+  });
+
+  it("does not show the word", () => {
+    expect(encodeWord("bril")).toBe("YnJpbA");
+  });
+
+  it("gives undefined for a code that is not a word", () => {
+    expect(decodeWord("")).toBeUndefined();
+    expect(decodeWord("not base64!")).toBeUndefined();
+    expect(decodeWord(encodeWord("twee woorden"))).toBeUndefined();
   });
 });

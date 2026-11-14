@@ -12,6 +12,8 @@
     betweenGuesses,
     collator,
     dayNumber,
+    decodeWord,
+    encodeWord,
     findWord,
     formatDay,
     makeDictionary,
@@ -19,7 +21,7 @@
     splitGuesses,
     startsOf,
   } from "./lib/game";
-  import { clearGuesses, loadGuesses, loadHistory, saveGuesses, saveSolved } from "./lib/storage";
+  import { chosenKey, clearGuesses, dailyKey, loadGuesses, loadHistory, saveGuesses, saveSolved } from "./lib/storage";
 
   // The dictionary decides whether a guess is a real word.
   let dictionary: Dictionary | undefined = $state.raw();
@@ -31,8 +33,14 @@
     })
     .catch(() => {});
 
+  const url = new URL(location.href);
   const day = dayNumber(new Date());
-  const answer = answerForDay(dayWordsText.split("\n").filter(Boolean), day);
+  // ?woord=<code> plays a word chosen by someone else instead of the word of the day
+  const code = url.searchParams.get("woord") ?? "";
+  const chosen = decodeWord(code);
+  const answer = chosen ?? answerForDay(dayWordsText.split("\n").filter(Boolean), day);
+  const storageKey = chosen ? chosenKey : dailyKey;
+  const game = chosen ? code : day;
 
   function hint(guess: string): string {
     return collator.compare(guess, answer) < 0
@@ -40,15 +48,14 @@
       : `${guess} komt later. Het geheime woord staat dus eerder!`;
   }
 
-  // ?clear in the URL forgets today's guesses; it is removed so a reload does not clear again
-  const url = new URL(location.href);
+  // ?clear in the URL forgets the guesses of this game; it is removed so a reload does not clear again
   if (url.searchParams.has("clear")) {
-    clearGuesses();
+    clearGuesses(storageKey);
     url.searchParams.delete("clear");
     history.replaceState(null, "", url);
   }
 
-  const restored = loadGuesses(day);
+  const restored = loadGuesses(storageKey, game);
   const lastRestored = restored.at(-1);
 
   let guessed: string[] = $state(restored);
@@ -86,11 +93,12 @@
     guessed.push(guess);
     latest = guess;
     typed = "";
-    saveGuesses(day, $state.snapshot(guessed));
+    saveGuesses(storageKey, game, $state.snapshot(guessed));
     message = guess === answer ? "" : hint(guess);
 
     if (guess === answer) {
-      solvedWords = saveSolved({ day, word: answer, attempts: guessed.length });
+      // only the words of the day are kept in the history
+      if (!chosen) solvedWords = saveSolved({ day, word: answer, attempts: guessed.length });
       await tick();
       if (success) confetti(success);
     } else {
@@ -98,12 +106,42 @@
     }
   }
 
+  let chooseTyped = $state("");
+  let chooseMessage = $state("");
+  let link = $state("");
+  let copied = $state(false);
+
+  async function makeLink(event: SubmitEvent) {
+    event.preventDefault();
+    const text = chooseTyped.trim();
+    await dictionaryLoaded;
+    // the other player can only guess words in the dictionary
+    const word = dictionary ? findWord(dictionary, text) : text.toLocaleLowerCase("nl-NL");
+    if (!word) {
+      chooseMessage = `${text} staat niet in mijn woordenboek. Kies een ander woord!`;
+      link = "";
+      return;
+    }
+    // the typed word disappears, so whoever guesses does not see it
+    chooseTyped = "";
+    chooseMessage = "";
+    copied = false;
+    link = new URL(`?woord=${encodeWord(word)}`, location.origin + location.pathname).href;
+  }
+
+  async function copyLink() {
+    await navigator.clipboard.writeText(link);
+    copied = true;
+  }
+
   onMount(() => {
     // also for games won before the history was kept
-    if (won && !solvedWords.some(entry => entry.day === day)) {
+    if (won && !chosen && !solvedWords.some(entry => entry.day === day)) {
       solvedWords = saveSolved({ day, word: answer, attempts: guessed.length });
     }
     if (won && success) confetti(success);
+    // not on narrow screens, where it would open the keyboard over the page
+    if (matchMedia("(min-width: 721px)").matches) input?.focus();
   });
 </script>
 
@@ -113,7 +151,11 @@
       <span class="mascot" aria-hidden="true">🦊</span>Alfagok kids<span class="mascot" aria-hidden="true">🦊</span>
     </h1>
     <p class="intro" class:played={guessed.length > 0}>
-      Raad het geheime woord. Staat jouw woord eerder of later in het alfabet?
+      {#if chosen}
+        Iemand heeft een geheim woord voor je gekozen. Staat jouw woord eerder of later in het alfabet?
+      {:else}
+        Raad het geheime woord. Staat jouw woord eerder of later in het alfabet?
+      {/if}
     </p>
     <span class="counter">{guessed.length} {guessed.length === 1 ? "poging" : "pogingen"}</span>
   </header>
@@ -131,7 +173,9 @@
   </section>
 
   {#if won}
-    <p class="success" role="status" bind:this={success}>Hoera! Het geheime woord is {answer}. Goed geraden!</p>
+    <p class="success" role="status" bind:this={success}>
+      Hoera! Het geheime woord is <strong>{answer}</strong>. Goed geraden!
+    </p>
   {:else}
     <form onsubmit={submit}>
       <label for="guess-input" class="visually-hidden">Jouw woord</label>
@@ -163,7 +207,7 @@
     Je ziet of het geheime woord eerder of later komt. Blijf raden tot je het vindt!
   </p>
 
-  {#if solvedWords.length > 0}
+  {#if !chosen && solvedWords.length > 0}
     <section class="history">
       <h2>Eerder geraden</h2>
       <ul>
@@ -178,6 +222,35 @@
     </section>
   {/if}
 </main>
+
+{#if chosen}
+  <p class="back"><a href={location.pathname}>Terug naar het woord van de dag</a></p>
+{/if}
+
+<!-- out of the way: only for whoever wants to give someone else a word to guess -->
+<details class="choose">
+  <summary>Kies zelf een geheim woord</summary>
+  <p>Maak een link en stuur die naar iemand die het woord moet raden.</p>
+  <form onsubmit={makeLink}>
+    <label for="choose-input" class="visually-hidden">Jouw geheime woord</label>
+    <input
+      id="choose-input"
+      type="text"
+      bind:value={chooseTyped}
+      placeholder="Jouw geheime woord..."
+      autocomplete="off"
+      required />
+    <button type="submit">Maak link</button>
+  </form>
+  {#if link}
+    <div class="link">
+      <label for="link-output" class="visually-hidden">Link</label>
+      <input id="link-output" type="text" value={link} readonly onfocus={event => event.currentTarget.select()} />
+      <button type="button" onclick={copyLink}>{copied ? "Gekopieerd!" : "Kopieer"}</button>
+    </div>
+  {/if}
+  <p class="message" role="status" aria-live="polite">{chooseMessage}</p>
+</details>
 
 <style>
   main {
@@ -300,7 +373,6 @@
     background: #2b8a4e;
     color: #fff;
     font-size: 1.1rem;
-    font-weight: 800;
     text-align: center;
   }
 
@@ -367,6 +439,34 @@
     color: #53617a;
     font-size: 0.95rem;
     text-align: center;
+  }
+
+  .back,
+  .choose {
+    width: min(100%, 560px);
+    margin: 24px auto 0;
+    font-size: 0.95rem;
+    text-align: center;
+  }
+
+  .back a {
+    color: #23324d;
+    font-weight: 700;
+  }
+
+  .choose summary {
+    color: #53617a;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .choose p {
+    margin: 10px 0 0;
+  }
+
+  .link {
+    display: flex;
+    gap: 8px;
   }
 
   .history ul {

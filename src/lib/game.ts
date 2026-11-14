@@ -117,3 +117,23 @@ export function alphabetColumns(canStart: CanStart, maxColumns = 6): AlphabetCol
   }
   return columns;
 }
+
+// A word chosen by someone else travels in the link, in base64url so it cannot be read at a glance.
+export function encodeWord(word: string): string {
+  const bytes = new TextEncoder().encode(word);
+  return btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+
+// The word from encodeWord(), or undefined if the code is not a word.
+export function decodeWord(code: string): string | undefined {
+  try {
+    const binary = atob(code.replace(/-/g, "+").replace(/_/g, "/"));
+    const word = new TextDecoder("utf-8", { fatal: true }).decode(Uint8Array.from(binary, char => char.charCodeAt(0)));
+    return /^\p{L}+$/u.test(word) ? word.toLocaleLowerCase("nl-NL") : undefined;
+  } catch {
+    return undefined;
+  }
+}

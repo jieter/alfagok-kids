@@ -1,22 +1,25 @@
-const storageKey = "alfagok-kinderen";
+// The guesses for the daily word and for a word chosen by someone else are kept apart.
+export const dailyKey = "alfagok-kinderen";
+export const chosenKey = "alfagok-kinderen-gekozen";
 
-// Only today's guesses are kept; storage may be unavailable (e.g. private windows).
-export function saveGuesses(day: number, guesses: string[]): void {
+// Only the current game is kept: today, or the code of the chosen word. Storage may be unavailable
+// (e.g. private windows).
+export function saveGuesses(key: string, game: number | string, guesses: string[]): void {
   try {
-    localStorage.setItem(storageKey, JSON.stringify({ day, guesses }));
+    localStorage.setItem(key, JSON.stringify({ game, guesses }));
   } catch {}
 }
 
-export function clearGuesses(): void {
+export function clearGuesses(key: string): void {
   try {
-    localStorage.removeItem(storageKey);
+    localStorage.removeItem(key);
   } catch {}
 }
 
-export function loadGuesses(day: number): string[] {
+export function loadGuesses(key: string, game: number | string): string[] {
   try {
-    const saved = JSON.parse(localStorage.getItem(storageKey) ?? "null");
-    return saved && saved.day === day && Array.isArray(saved.guesses) ? saved.guesses : [];
+    const saved = JSON.parse(localStorage.getItem(key) ?? "null");
+    return saved && saved.game === game && Array.isArray(saved.guesses) ? saved.guesses : [];
   } catch {
     return [];
   }
