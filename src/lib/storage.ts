@@ -51,3 +51,20 @@ export function saveSolved(solved: Solved): Solved[] {
   } catch {}
   return history;
 }
+
+const levelKey = "boter-kaas-en-eieren-niveau";
+
+// The chosen level of boter, kaas en eieren, or undefined if none was saved.
+export function loadLevel(): string | undefined {
+  try {
+    return localStorage.getItem(levelKey) ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function saveLevel(level: string): void {
+  try {
+    localStorage.setItem(levelKey, level);
+  } catch {}
+}
