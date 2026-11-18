@@ -227,6 +227,8 @@
   <p class="back"><a href={location.pathname}>Terug naar het woord van de dag</a></p>
 {/if}
 
+<p class="back"><a href="boter-kaas-en-eieren/">Speel boter, kaas en eieren</a></p>
+
 <!-- out of the way: only for whoever wants to give someone else a word to guess -->
 <details class="choose">
   <summary>Kies zelf een geheim woord</summary>

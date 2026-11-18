@@ -32,6 +32,11 @@ function gzipAsset(): Plugin {
 export default defineConfig({
   base: "/alfagok/",
   plugins: [svelte(), gzipAsset()],
+  build: {
+    rolldownOptions: {
+      input: ["index.html", "boter-kaas-en-eieren/index.html"],
+    },
+  },
   // own port, so it does not silently share 5173 with another server
   server: {
     port: 5180,
